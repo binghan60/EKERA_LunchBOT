@@ -2,6 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const line = require('@line/bot-sdk');
 const mongoose = require('mongoose');
+const Restaurant = require('./models/Restaurant');
+const GroupRestaurant = require('./models/GroupRestaurant');
+
 const app = express();
 
 const config = {
@@ -12,7 +15,6 @@ const config = {
 const client = new line.messagingApi.MessagingApiClient({
     channelAccessToken: config.channelAccessToken,
 });
-console.log('process.env.MONGODB_URI', process.env.MONGODB_URI);
 mongoose
     .connect(process.env.MONGODB_URI)
     .then(() => {
@@ -51,17 +53,36 @@ async function handleEvent(event) {
     }
 
     if (event.message.text === '抽獎') {
-        const randomNumber = Math.floor(Math.random() * 100) + 1;
-        return client.replyMessage({
-            replyToken: event.replyToken,
-            messages: [
+        const result = await drawRestaurant(senderId);
+
+        if (result) {
+            return client.replyMessage(event.replyToken, [
                 {
                     type: 'text',
-                    text: `抽獎結果：${randomNumber} + ${senderId}`,
+                    text: `🎯 今天抽到的是：「${result.name}」喵！`,
                 },
-            ],
-        });
+            ]);
+        } else {
+            return client.replyMessage(event.replyToken, [
+                {
+                    type: 'text',
+                    text: `😿 沒有可以抽的餐廳唷～請先加幾家！`,
+                },
+            ]);
+        }
     }
+}
+
+async function drawRestaurant(groupId) {
+    const groupRestaurants = await GroupRestaurant.find({ groupId }).select('restaurantId');
+
+    const restaurantIds = groupRestaurants.map((gr) => gr.restaurantId);
+
+    if (restaurantIds.length === 0) return null;
+
+    const result = await Restaurant.aggregate([{ $match: { _id: { $in: restaurantIds }, isActive: true } }, { $sample: { size: 1 } }]);
+
+    return result[0] || null;
 }
 
 const port = process.env.PORT || 3000;
