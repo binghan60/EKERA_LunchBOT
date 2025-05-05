@@ -12,16 +12,14 @@ const config = {
     channelSecret: process.env.CHANNEL_SECRET,
 };
 
-const client = new line.messagingApi.MessagingApiClient({
-    channelAccessToken: config.channelAccessToken,
-});
+const client = new line.Client(config);
 mongoose
     .connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('資料庫連線成功');
     })
     .catch((err) => {
-        console.log('資料庫連線失敗');
+        console.log('資料庫連線失敗', err);
     });
 
 app.post('/webhook', line.middleware(config), async (req, res) => {
@@ -39,7 +37,7 @@ app.get('/', (req, res) => {
 });
 
 async function handleEvent(event) {
-    if (event.type !== 'message' || event.message.type !== 'text') return;
+    if (event.type !== 'message' || event.message.type !== 'text') return Promise.resolve(null);
 
     const sourceType = event.source.type;
     let senderId;
@@ -67,14 +65,14 @@ async function handleEvent(event) {
             });
         }
     }
+    return Promise.resolve(null);
 }
 
 async function drawRestaurant(groupId) {
     const groupRestaurants = await GroupRestaurant.find({ groupId }).select('restaurantId');
+    if (groupRestaurants.length === 0) return null;
 
     const restaurantIds = groupRestaurants.map((gr) => new mongoose.Types.ObjectId(gr.restaurantId));
-
-    if (restaurantIds.length === 0) return null;
 
     const result = await Restaurant.aggregate([{ $match: { _id: { $in: restaurantIds }, isActive: true } }, { $sample: { size: 1 } }]);
 
