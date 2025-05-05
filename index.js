@@ -56,19 +56,15 @@ async function handleEvent(event) {
         const result = await drawRestaurant(senderId);
 
         if (result) {
-            return client.replyMessage(event.replyToken, [
-                {
-                    type: 'text',
-                    text: `🎯 今天抽到的是：「${result.name}」喵！`,
-                },
-            ]);
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `🎯 今天抽到的是：「${result.name}」喵！`,
+            });
         } else {
-            return client.replyMessage(event.replyToken, [
-                {
-                    type: 'text',
-                    text: `😿 沒有可以抽的餐廳唷～請先加幾家！`,
-                },
-            ]);
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 沒有可以抽的餐廳唷～請先加幾家！`,
+            });
         }
     }
 }
