@@ -76,7 +76,7 @@ async function handleEvent(event) {
 async function drawRestaurant(groupId) {
     const groupRestaurants = await GroupRestaurant.find({ groupId }).select('restaurantId');
 
-    const restaurantIds = groupRestaurants.map((gr) => gr.restaurantId);
+    const restaurantIds = groupRestaurants.map((gr) => new mongoose.Types.ObjectId(gr.restaurantId));
 
     if (restaurantIds.length === 0) return null;
 
