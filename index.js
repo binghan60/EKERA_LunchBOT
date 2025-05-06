@@ -73,6 +73,35 @@ async function handleEvent(event) {
         });
     }
 
+    if (msg.startsWith('/新增餐廳')) {
+        const parts = msg.split(' ');
+        const name = parts[1];
+        const office = parts[2];
+
+        if (!name || !office) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `請用「/新增餐廳 餐廳名稱 辦公室」的格式喵～例如：/新增餐廳 小六食堂 內湖`,
+            });
+        }
+
+        // 先確認餐廳是否存在（用名稱判斷）
+        let restaurant = await Restaurant.findOne({ name });
+
+        // 沒有的話就新增
+        if (!restaurant) {
+            restaurant = await Restaurant.create({ name });
+        }
+
+        // 建立群組與餐廳的關聯（支援多辦公室）
+        await GroupRestaurant.updateOne({ groupId: senderId, restaurantId: restaurant._id }, { $addToSet: { office }, addedBy: senderId }, { upsert: true });
+
+        return client.replyMessage(event.replyToken, {
+            type: 'text',
+            text: `✅ 已新增餐廳「${name}」到「${office}」喵～！`,
+        });
+    }
+
     if (event.message.text === '抽獎') {
         const groupSetting = await GroupSetting.findOne({ groupId: senderId });
         if (!groupSetting) {
