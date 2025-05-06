@@ -132,7 +132,7 @@ async function handleEvent(event) {
         });
     }
 
-    if (msg === '/列表') {
+    if (msg === '/切換辦公室') {
         const setting = await GroupSetting.findOne({ groupId });
 
         if (!setting || !setting.currentOffice) {
