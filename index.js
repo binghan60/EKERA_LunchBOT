@@ -146,6 +146,23 @@ async function handleEvent(event) {
             text: `✅ 已新增餐廳「${name}」到「${office}」喵！`,
         });
     }
+    if (msg === '/辦公室列表') {
+        const offices = await GroupRestaurant.distinct('office', { groupId });
+
+        if (!offices.length) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 目前還沒有加入任何辦公室的餐廳唷～`,
+            });
+        }
+
+        const list = offices.map((o, i) => `${i + 1}. ${o}`).join('\n');
+
+        return client.replyMessage(event.replyToken, {
+            type: 'text',
+            text: `🏢 此群組目前的辦公室列表如下喵：\n\n${list}`,
+        });
+    }
 
     if (event.message.text === '抽獎') {
         const groupSetting = await GroupSetting.findOne({ groupId });
