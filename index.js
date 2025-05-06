@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const Restaurant = require('./models/Restaurant');
 const GroupRestaurant = require('./models/GroupRestaurant');
 const GroupSetting = require('./models/GroupSetting');
+const restaurantRouter = require('./routes/restaurantRouter.js');
 
 const app = express();
 
@@ -22,7 +23,10 @@ mongoose
     .catch((err) => {
         console.log('資料庫連線失敗', err);
     });
-
+app.get('/', (req, res) => {
+    res.send('Hello World! This is a LINE Bot server.');
+});
+app.use('/restaurant', restaurantRouter);
 app.post('/webhook', line.middleware(config), async (req, res) => {
     try {
         const events = req.body.events;
@@ -33,9 +37,17 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
         res.status(500).end();
     }
 });
-app.get('/', (req, res) => {
-    res.send('Hello World! This is a LINE Bot server.');
-});
+
+// API TODO
+// 1. 新增餐廳
+// 2. 刪除餐廳
+// 3. 列出所有餐廳
+// 4. 列出所有辦公室
+// 5. 切換辦公室
+// 6. 列出目前辦公室的餐廳
+// 7. 抽獎
+// 8. 列出所有餐廳的詳細資訊
+// 9. Group基本設定
 
 async function handleEvent(event) {
     if (event.type !== 'message' || event.message.type !== 'text') return Promise.resolve(null);
