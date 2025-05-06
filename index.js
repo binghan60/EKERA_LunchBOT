@@ -4,6 +4,7 @@ const line = require('@line/bot-sdk');
 const mongoose = require('mongoose');
 const Restaurant = require('./models/Restaurant');
 const GroupRestaurant = require('./models/GroupRestaurant');
+const GroupSetting = require('./models/GroupSetting');
 
 const app = express();
 
@@ -51,7 +52,15 @@ async function handleEvent(event) {
     }
 
     if (event.message.text === '抽獎') {
-        const result = await drawRestaurant(senderId);
+        const groupSetting = await GroupSetting.findOne({ groupId: senderId });
+        if (!groupSetting) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 這個群組還沒有設定地點，請先設定！`,
+            });
+        }
+        const currentOffice = groupSetting.currentOffice;
+        const result = await drawRestaurant(senderId, currentOffice);
 
         if (result) {
             return client.replyMessage(event.replyToken, {
@@ -68,17 +77,14 @@ async function handleEvent(event) {
     return Promise.resolve(null);
 }
 
-async function drawRestaurant(groupId) {
+async function drawRestaurant(groupId, office) {
     const groupRestaurants = await GroupRestaurant.find({
         groupId,
-        office: '善導寺',
+        office,
     }).select('restaurantId');
     if (groupRestaurants.length === 0) return null;
-
     const restaurantIds = groupRestaurants.map((gr) => new mongoose.Types.ObjectId(gr.restaurantId));
-
     const result = await Restaurant.aggregate([{ $match: { _id: { $in: restaurantIds }, isActive: true } }, { $sample: { size: 1 } }]);
-
     return result[0] || null;
 }
 
