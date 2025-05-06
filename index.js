@@ -51,22 +51,25 @@ async function handleEvent(event) {
         senderId = event.source.roomId;
     }
 
-    if (event.message.text === '/切換地點') {
-        const groupSetting = await GroupSetting.findOne({ groupId: senderId });
-        if (groupSetting) {
+    const msg = event.message.text.trim();
+
+    // 🔁 切換地點指令
+    if (msg.startsWith('/切換地點')) {
+        const parts = msg.split(' ');
+        const newOffice = parts[1];
+
+        if (!newOffice) {
             return client.replyMessage(event.replyToken, {
                 type: 'text',
-                text: `😿 這個群組已經設定過地點了！`,
+                text: `請用「/切換地點 XX」格式切換地點喵～`,
             });
         }
-        const newGroupSetting = new GroupSetting({
-            groupId: senderId,
-            currentOffice: '台北', // 預設地點
-        });
-        await newGroupSetting.save();
+
+        await GroupSetting.findOneAndUpdate({ groupId: senderId }, { currentOffice: newOffice, updatedAt: new Date() }, { upsert: true });
+
         return client.replyMessage(event.replyToken, {
             type: 'text',
-            text: `🎉 群組地點已設定為「台北」！`,
+            text: `📍 已切換至「${newOffice}」喵！`,
         });
     }
 
