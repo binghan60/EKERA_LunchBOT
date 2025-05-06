@@ -51,6 +51,25 @@ async function handleEvent(event) {
         senderId = event.source.roomId;
     }
 
+    if (event.message.text === '/切換地點') {
+        const groupSetting = await GroupSetting.findOne({ groupId: senderId });
+        if (groupSetting) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 這個群組已經設定過地點了！`,
+            });
+        }
+        const newGroupSetting = new GroupSetting({
+            groupId: senderId,
+            currentOffice: '台北', // 預設地點
+        });
+        await newGroupSetting.save();
+        return client.replyMessage(event.replyToken, {
+            type: 'text',
+            text: `🎉 群組地點已設定為「台北」！`,
+        });
+    }
+
     if (event.message.text === '抽獎') {
         const groupSetting = await GroupSetting.findOne({ groupId: senderId });
         if (!groupSetting) {
