@@ -106,6 +106,37 @@ async function handleEvent(event) {
             text: `📖 所有登錄過的餐廳如下喵：\n\n${list}`,
         });
     }
+    if (msg === '/目前餐廳') {
+        const setting = await GroupSetting.findOne({ groupId });
+
+        if (!setting || !setting.currentOffice) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 尚未設定目前的辦公室喵，請先用 /切換地點 指定地點喵～`,
+            });
+        }
+
+        const currentOffice = setting.currentOffice;
+
+        const groupRestaurants = await GroupRestaurant.find({
+            groupId,
+            office: currentOffice,
+        }).populate('restaurantId');
+
+        if (groupRestaurants.length === 0) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `📭 目前辦公室「${currentOffice}」下還沒有任何餐廳喵～`,
+            });
+        }
+
+        const list = groupRestaurants.map((gr, i) => `${i + 1}. ${gr.restaurantId.name}`).join('\n');
+
+        return client.replyMessage(event.replyToken, {
+            type: 'text',
+            text: `📋 目前辦公室「${currentOffice}」的餐廳列表如下喵～\n\n${list}`,
+        });
+    }
 
     if (msg.startsWith('/新增餐廳')) {
         const parts = msg.split(' ');
