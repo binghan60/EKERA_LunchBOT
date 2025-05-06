@@ -53,8 +53,22 @@ async function handleEvent(event) {
 
     const msg = event.message.text.trim();
 
-    // 🔁 切換地點指令
-    if (msg.startsWith('/切換地點')) {
+    if (msg === '/辦公室列表') {
+        const offices = await GroupRestaurant.distinct('office', { groupId });
+        if (!offices.length) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 目前還沒有加入任何辦公室的餐廳唷～`,
+            });
+        }
+        const list = offices.map((o, i) => `${i + 1}. ${o}`).join('\n');
+        return client.replyMessage(event.replyToken, {
+            type: 'text',
+            text: `🏢 此群組目前的辦公室列表如下喵：\n\n${list}`,
+        });
+    }
+
+    if (msg.startsWith('/切換辦公室')) {
         const parts = msg.split(' ');
         const newOffice = parts[1];
         if (!newOffice) {
@@ -63,7 +77,6 @@ async function handleEvent(event) {
                 text: `請用「/切換地點 XX」格式切換地點喵～`,
             });
         }
-        // 取得此群組目前所有可用的辦公室
         const officeList = await GroupRestaurant.distinct('office', { groupId });
         if (!officeList.includes(newOffice)) {
             const list = officeList.length ? officeList.join('、') : '無';
@@ -72,7 +85,6 @@ async function handleEvent(event) {
                 text: `❌ 找不到「${newOffice}」這個辦公室喵～\n可用辦公室有：${list}`,
             });
         }
-        // 正常切換地點
         await GroupSetting.findOneAndUpdate({ groupId }, { currentOffice: newOffice, updatedAt: new Date() }, { upsert: true });
         return client.replyMessage(event.replyToken, {
             type: 'text',
@@ -92,73 +104,6 @@ async function handleEvent(event) {
         return client.replyMessage(event.replyToken, {
             type: 'text',
             text: `📖 所有登錄過的餐廳如下喵：\n\n${list}`,
-        });
-    }
-
-    if (msg.startsWith('/刪除餐廳')) {
-        const parts = msg.split(' ');
-        const name = parts[1];
-        const office = parts[2];
-        if (!name || !office) {
-            return client.replyMessage(event.replyToken, {
-                type: 'text',
-                text: `請用「/刪除餐廳 餐廳名稱 辦公室」的格式喵～例如：/刪除餐廳 小六食堂 內湖`,
-            });
-        }
-        const restaurant = await Restaurant.findOne({ name });
-        if (!restaurant) {
-            return client.replyMessage(event.replyToken, {
-                type: 'text',
-                text: `😿 沒有找到叫「${name}」的餐廳喵～`,
-            });
-        }
-
-        const deleted = await GroupRestaurant.findOneAndDelete({
-            groupId,
-            restaurantId: restaurant._id,
-            office,
-        });
-
-        if (!deleted) {
-            return client.replyMessage(event.replyToken, {
-                type: 'text',
-                text: `😿 找不到「${name}」在「${office}」的紀錄喵～`,
-            });
-        }
-
-        return client.replyMessage(event.replyToken, {
-            type: 'text',
-            text: `🗑️ 已從「${office}」刪除餐廳「${name}」喵！`,
-        });
-    }
-
-    if (msg === '/切換辦公室') {
-        const setting = await GroupSetting.findOne({ groupId });
-
-        if (!setting || !setting.currentOffice) {
-            return client.replyMessage(event.replyToken, {
-                type: 'text',
-                text: `😿 目前尚未設定辦公室，請先用 /切換辦公室 指令喵～`,
-            });
-        }
-
-        const groupRestaurants = await GroupRestaurant.find({
-            groupId,
-            office: setting.currentOffice,
-        }).populate('restaurantId');
-
-        if (groupRestaurants.length === 0) {
-            return client.replyMessage(event.replyToken, {
-                type: 'text',
-                text: `📭 「${setting.currentOffice}」目前沒有餐廳可以抽唷～`,
-            });
-        }
-
-        const list = groupRestaurants.map((gr, i) => `${i + 1}. ${gr.restaurantId.name}`).join('\n');
-
-        return client.replyMessage(event.replyToken, {
-            type: 'text',
-            text: `📋 「${setting.currentOffice}」的餐廳列表如下喵～\n\n${list}`,
         });
     }
 
@@ -199,21 +144,41 @@ async function handleEvent(event) {
             text: `✅ 已新增餐廳「${name}」到「${office}」喵！`,
         });
     }
-    if (msg === '/辦公室列表') {
-        const offices = await GroupRestaurant.distinct('office', { groupId });
 
-        if (!offices.length) {
+    if (msg.startsWith('/刪除餐廳')) {
+        const parts = msg.split(' ');
+        const name = parts[1];
+        const office = parts[2];
+        if (!name || !office) {
             return client.replyMessage(event.replyToken, {
                 type: 'text',
-                text: `😿 目前還沒有加入任何辦公室的餐廳唷～`,
+                text: `請用「/刪除餐廳 餐廳名稱 辦公室」的格式喵～例如：/刪除餐廳 小六食堂 內湖`,
+            });
+        }
+        const restaurant = await Restaurant.findOne({ name });
+        if (!restaurant) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 沒有找到叫「${name}」的餐廳喵～`,
             });
         }
 
-        const list = offices.map((o, i) => `${i + 1}. ${o}`).join('\n');
+        const deleted = await GroupRestaurant.findOneAndDelete({
+            groupId,
+            restaurantId: restaurant._id,
+            office,
+        });
+
+        if (!deleted) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 找不到「${name}」在「${office}」的紀錄喵～`,
+            });
+        }
 
         return client.replyMessage(event.replyToken, {
             type: 'text',
-            text: `🏢 此群組目前的辦公室列表如下喵：\n\n${list}`,
+            text: `🗑️ 已從「${office}」刪除餐廳「${name}」喵！`,
         });
     }
 
