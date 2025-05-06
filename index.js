@@ -85,20 +85,35 @@ async function handleEvent(event) {
             });
         }
 
-        // 先確認餐廳是否存在（用名稱判斷）
         let restaurant = await Restaurant.findOne({ name });
 
-        // 沒有的話就新增
         if (!restaurant) {
             restaurant = await Restaurant.create({ name });
         }
 
-        // 建立群組與餐廳的關聯（支援多辦公室）
-        await GroupRestaurant.updateOne({ groupId: senderId, restaurantId: restaurant._id }, { $addToSet: { office }, addedBy: senderId }, { upsert: true });
+        const exists = await GroupRestaurant.findOne({
+            groupId,
+            restaurantId: restaurant._id,
+            office,
+        });
+
+        if (exists) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `⚠️ 餐廳「${name}」已經在「${office}」這個辦公室囉喵～`,
+            });
+        }
+
+        await GroupRestaurant.create({
+            groupId,
+            restaurantId: restaurant._id,
+            office,
+            addedBy: event.source.userId || '系統',
+        });
 
         return client.replyMessage(event.replyToken, {
             type: 'text',
-            text: `✅ 已新增餐廳「${name}」到「${office}」喵～！`,
+            text: `✅ 已新增餐廳「${name}」到「${office}」喵！`,
         });
     }
 
