@@ -41,14 +41,14 @@ async function handleEvent(event) {
     if (event.type !== 'message' || event.message.type !== 'text') return Promise.resolve(null);
 
     const sourceType = event.source.type;
-    let senderId;
+    let groupId;
 
     if (sourceType === 'user') {
-        senderId = event.source.userId;
+        groupId = event.source.userId;
     } else if (sourceType === 'group') {
-        senderId = event.source.groupId;
+        groupId = event.source.groupId;
     } else if (sourceType === 'room') {
-        senderId = event.source.roomId;
+        groupId = event.source.roomId;
     }
 
     const msg = event.message.text.trim();
@@ -65,7 +65,7 @@ async function handleEvent(event) {
             });
         }
 
-        await GroupSetting.findOneAndUpdate({ groupId: senderId }, { currentOffice: newOffice, updatedAt: new Date() }, { upsert: true });
+        await GroupSetting.findOneAndUpdate({ groupId }, { currentOffice: newOffice, updatedAt: new Date() }, { upsert: true });
 
         return client.replyMessage(event.replyToken, {
             type: 'text',
@@ -118,7 +118,7 @@ async function handleEvent(event) {
     }
 
     if (event.message.text === '抽獎') {
-        const groupSetting = await GroupSetting.findOne({ groupId: senderId });
+        const groupSetting = await GroupSetting.findOne({ groupId });
         if (!groupSetting) {
             return client.replyMessage(event.replyToken, {
                 type: 'text',
@@ -126,7 +126,7 @@ async function handleEvent(event) {
             });
         }
         const currentOffice = groupSetting.currentOffice;
-        const result = await drawRestaurant(senderId, currentOffice);
+        const result = await drawRestaurant(groupId, currentOffice);
 
         if (result) {
             return client.replyMessage(event.replyToken, {
