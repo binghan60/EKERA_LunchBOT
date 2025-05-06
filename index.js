@@ -73,6 +73,36 @@ async function handleEvent(event) {
         });
     }
 
+    if (msg === '/列表') {
+        const setting = await GroupSetting.findOne({ groupId });
+
+        if (!setting || !setting.office) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 目前尚未設定辦公室，請先用 /切換辦公室 指令喵～`,
+            });
+        }
+
+        const groupRestaurants = await GroupRestaurant.find({
+            groupId,
+            office: setting.office,
+        }).populate('restaurantId');
+
+        if (groupRestaurants.length === 0) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `📭 「${setting.office}」目前沒有餐廳可以抽唷～`,
+            });
+        }
+
+        const list = groupRestaurants.map((gr, i) => `${i + 1}. ${gr.restaurantId.name}`).join('\n');
+
+        return client.replyMessage(event.replyToken, {
+            type: 'text',
+            text: `📋 「${setting.office}」的餐廳列表如下喵～\n\n${list}`,
+        });
+    }
+
     if (msg.startsWith('/新增餐廳')) {
         const parts = msg.split(' ');
         const name = parts[1];
