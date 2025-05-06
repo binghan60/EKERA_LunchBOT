@@ -76,7 +76,7 @@ async function handleEvent(event) {
     if (msg === '/列表') {
         const setting = await GroupSetting.findOne({ groupId });
 
-        if (!setting || !setting.office) {
+        if (!setting || !setting.currentOffice) {
             return client.replyMessage(event.replyToken, {
                 type: 'text',
                 text: `😿 目前尚未設定辦公室，請先用 /切換辦公室 指令喵～`,
@@ -85,13 +85,13 @@ async function handleEvent(event) {
 
         const groupRestaurants = await GroupRestaurant.find({
             groupId,
-            office: setting.office,
+            office: setting.currentOffice,
         }).populate('restaurantId');
 
         if (groupRestaurants.length === 0) {
             return client.replyMessage(event.replyToken, {
                 type: 'text',
-                text: `📭 「${setting.office}」目前沒有餐廳可以抽唷～`,
+                text: `📭 「${setting.currentOffice}」目前沒有餐廳可以抽唷～`,
             });
         }
 
@@ -99,7 +99,7 @@ async function handleEvent(event) {
 
         return client.replyMessage(event.replyToken, {
             type: 'text',
-            text: `📋 「${setting.office}」的餐廳列表如下喵～\n\n${list}`,
+            text: `📋 「${setting.currentOffice}」的餐廳列表如下喵～\n\n${list}`,
         });
     }
 
