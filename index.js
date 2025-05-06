@@ -69,7 +69,10 @@ async function handleEvent(event) {
 }
 
 async function drawRestaurant(groupId) {
-    const groupRestaurants = await GroupRestaurant.find({ groupId }).select('restaurantId');
+    const groupRestaurants = await GroupRestaurant.find({
+        groupId,
+        office: '善導寺',
+    }).select('restaurantId');
     if (groupRestaurants.length === 0) return null;
 
     const restaurantIds = groupRestaurants.map((gr) => new mongoose.Types.ObjectId(gr.restaurantId));
