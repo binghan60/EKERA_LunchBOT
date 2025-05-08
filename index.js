@@ -6,6 +6,7 @@ const Restaurant = require('./models/Restaurant');
 const GroupRestaurant = require('./models/GroupRestaurant');
 const GroupSetting = require('./models/GroupSetting');
 const apiRoutes = require('./routes/apiRouter.js');
+const webhookRoutes = require('./routes/webhookRouter.js');
 const cors = require('cors');
 // const bodyParser = require('body-parser');
 
