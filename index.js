@@ -6,6 +6,8 @@ const Restaurant = require('./models/Restaurant');
 const GroupRestaurant = require('./models/GroupRestaurant');
 const GroupSetting = require('./models/GroupSetting');
 const restaurantRouter = require('./routes/restaurantRouter.js');
+const groupSettingRouter = require('./routes/groupSettingRouter.js');
+// const bodyParser = require('body-parser');
 
 const app = express();
 
@@ -26,6 +28,7 @@ mongoose
 app.get('/', (req, res) => {
     res.send('Hello World! This is a LINE Bot server.');
 });
+app.use('/group-settings', groupSettingRouter);
 app.use('/restaurant', restaurantRouter);
 app.post('/webhook', line.middleware(config), async (req, res) => {
     try {
