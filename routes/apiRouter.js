@@ -1,7 +1,7 @@
 // apiRoutes.js
 const express = require('express');
-const restaurantRoutes = require('./routes/restaurantRouter.js');
-const groupSettingRoutes = require('./routes/groupSettingRouter.js');
+const restaurantRoutes = require('./restaurantRouter');
+const groupSettingRoutes = require('./groupSettingRouter.js');
 
 const router = express.Router();
 
