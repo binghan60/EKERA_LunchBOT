@@ -1,159 +1,122 @@
 <!DOCTYPE html>
-<html lang="zh-tw">
+<html lang="zh-Hant">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Group Setting CRUD</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>群組設定 Dashboard</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-        <script>
-            // API 路徑集中管理
-            const API_BASE = 'https://ekera-bot.vercel.app/group-settings';
-            const API_ROUTES = {
-                CREATE: API_BASE,
-                READ: (id) => `${API_BASE}/${id}`,
-                UPDATE: (id) => `${API_BASE}/${id}`,
-                DELETE: (id) => `${API_BASE}/${id}`,
-            };
-
-            // DOM 邏輯 & CRUD
-            window.addEventListener('DOMContentLoaded', () => {
-                const officeList = document.getElementById('officeList');
-
-                // 建立目前地點選單
-                function renderOfficeOptions(options) {
-                    const select = document.getElementById('currentOffice');
-                    select.innerHTML = '';
-                    options.forEach((opt) => {
-                        const option = document.createElement('option');
-                        option.value = opt;
-                        option.textContent = opt;
-                        select.appendChild(option);
-                    });
-                }
-
-                const clearList = () => (officeList.innerHTML = '');
-                const getOfficeArray = () => Array.from(officeList.children).map((li) => li.textContent);
-
-                // 加入新地點選項
-                document.getElementById('addOption').onclick = () => {
-                    const newOffice = document.getElementById('newOffice').value.trim();
-                    if (newOffice) {
-                        const li = document.createElement('li');
-                        li.textContent = newOffice;
-                        li.className = 'ml-4 list-disc';
-                        officeList.appendChild(li);
-                        document.getElementById('newOffice').value = '';
-                    }
-                };
-
-                // Create
-                document.getElementById('createBtn').onclick = async () => {
-                    const groupId = document.getElementById('groupId').value.trim();
-                    const currentOffice = document.getElementById('currentOffice').value;
-                    const officeOption = getOfficeArray();
-                    if (!groupId || !currentOffice) return alert('請輸入完整資料');
-
-                    try {
-                        await axios.post(API_ROUTES.CREATE, { groupId, currentOffice, officeOption });
-                        alert('已新增群組設定');
-                    } catch (err) {
-                        alert(err.response?.data || '新增失敗');
-                    }
-                };
-
-                // Read
-                document.getElementById('readBtn').onclick = async () => {
-                    const groupId = document.getElementById('groupId').value.trim();
-                    if (!groupId) return alert('請輸入群組 ID');
-
-                    try {
-                        const res = await axios.get(API_ROUTES.READ(groupId));
-                        const { currentOffice, officeOption } = res.data;
-                        renderOfficeOptions(officeOption);
-                        document.getElementById('currentOffice').value = currentOffice;
-                        clearList();
-                        officeOption.forEach((opt) => {
-                            const li = document.createElement('li');
-                            li.textContent = opt;
-                            li.className = 'ml-4 list-disc';
-                            officeList.appendChild(li);
-                        });
-                    } catch (err) {
-                        alert(err.response?.data || '讀取失敗');
-                    }
-                };
-
-                // Update
-                document.getElementById('updateBtn').onclick = async () => {
-                    const groupId = document.getElementById('groupId').value.trim();
-                    const currentOffice = document.getElementById('currentOffice').value;
-                    const officeOption = getOfficeArray();
-                    if (!groupId || !currentOffice) return alert('請輸入完整資料');
-
-                    try {
-                        await axios.put(API_ROUTES.UPDATE(groupId), { currentOffice, officeOption });
-                        alert('已更新群組設定');
-                    } catch (err) {
-                        alert(err.response?.data || '更新失敗');
-                    }
-                };
-
-                // Delete
-                document.getElementById('deleteBtn').onclick = async () => {
-                    const groupId = document.getElementById('groupId').value.trim();
-                    if (!groupId) return alert('請輸入群組 ID');
-
-                    if (confirm(`確定要刪除群組 ${groupId} 的設定？`)) {
-                        try {
-                            await axios.delete(API_ROUTES.DELETE(groupId));
-                            alert('已刪除群組設定');
-                        } catch (err) {
-                            alert(err.response?.data || '刪除失敗');
-                        }
-                    }
-                };
-
-                // 自動從 querystring 帶出群組 ID
-                const params = new URLSearchParams(window.location.search);
-                const autoGroupId = params.get('groupId');
-                if (autoGroupId) {
-                    document.getElementById('groupId').value = autoGroupId;
-                    document.getElementById('readBtn').click(); // 自動點擊讀取按鈕
-                }
-            });
-        </script>
     </head>
-    <body class="bg-gray-100 p-6">
-        <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow space-y-6">
-            <h1 class="text-xl font-bold text-blue-600">Group Setting 管理介面</h1>
+    <body class="bg-gray-100 min-h-screen">
+        <div class="max-w-4xl mx-auto py-10 px-4">
+            <h1 class="text-3xl font-bold text-center text-blue-700 mb-8">群組設定 Dashboard</h1>
 
-            <div>
-                <label class="block mb-1">群組 ID</label>
-                <input id="groupId" class="w-full border p-2 rounded" type="text" />
-            </div>
-
-            <div>
-                <label class="block mb-1">目前地點</label>
-                <select id="currentOffice" class="w-full border p-2 rounded"></select>
-            </div>
-
-            <div>
-                <label class="block mb-1">地點選項</label>
-                <ul id="officeList" class="mb-2 text-gray-700"></ul>
-                <div class="flex gap-2">
-                    <input id="newOffice" class="flex-1 border p-2 rounded" placeholder="輸入新地點" />
-                    <button id="addOption" class="bg-blue-500 text-white px-4 py-2 rounded">加入</button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button id="createBtn" class="bg-green-500 text-white px-4 py-2 rounded">新增</button>
-                <button id="readBtn" class="bg-yellow-500 text-white px-4 py-2 rounded">讀取</button>
-                <button id="updateBtn" class="bg-blue-500 text-white px-4 py-2 rounded">更新</button>
-                <button id="deleteBtn" class="bg-red-500 text-white px-4 py-2 rounded">刪除</button>
+            <div id="mainCard" class="bg-white shadow-lg rounded-xl p-6">
+                <div id="content" class="text-center text-gray-700">載入中...</div>
             </div>
         </div>
+
+        <script>
+            const API_URL = 'https://ekera-bot.vercel.app/group-settings'; // 修改為實際 API
+            const params = new URLSearchParams(window.location.search);
+            const groupId = params.get('groupId');
+            const contentDiv = document.getElementById('content');
+
+            if (!groupId) {
+                contentDiv.innerHTML = `
+        <p class="mb-4">尚未設定群組</p>
+        <a href="/create.html" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">新增群組設定</a>
+      `;
+            } else {
+                fetch(`${API_URL}/${groupId}`)
+                    .then((res) => {
+                        if (!res.ok) throw new Error('找不到群組設定');
+                        return res.json();
+                    })
+                    .then((data) => renderDashboard(data))
+                    .catch((err) => {
+                        contentDiv.innerHTML = `<p class="text-red-500">${err.message}</p>`;
+                    });
+            }
+
+            function renderDashboard(data) {
+                contentDiv.innerHTML = `
+        <div class="mb-6">
+          <p class="text-gray-600">群組 ID：<strong>${data.groupId}</strong></p>
+          <p class="text-gray-600 mb-2">目前地點：<span id="currentOffice" class="text-blue-600 font-bold">${data.currentOffice}</span></p>
+        </div>
+
+        <div class="mb-6">
+          <h2 class="text-lg font-semibold mb-2">可選地點</h2>
+          <ul id="officeList" class="grid grid-cols-2 gap-2 mb-2">
+            ${data.officeOption
+                .map(
+                    (opt) => `
+              <li>
+                <button onclick="switchOffice('${opt}')" class="w-full bg-gray-200 hover:bg-blue-100 text-gray-800 py-2 rounded">
+                  ${opt}
+                </button>
+              </li>
+            `
+                )
+                .join('')}
+          </ul>
+
+          <div class="flex gap-2 mt-4">
+            <input id="newOfficeInput" type="text" placeholder="輸入新地點" class="flex-1 px-4 py-2 border border-gray-300 rounded">
+            <button onclick="addNewOffice()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">新增</button>
+          </div>
+        </div>
+      `;
+            }
+
+            function switchOffice(newOffice) {
+                fetch(`${API_URL}/${groupId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ currentOffice: newOffice }),
+                })
+                    .then((res) => res.json())
+                    .then((data) => renderDashboard(data))
+                    .catch((err) => alert('切換失敗：' + err.message));
+            }
+
+            function addNewOffice() {
+                const input = document.getElementById('newOfficeInput');
+                const newOffice = input.value.trim();
+                if (!newOffice) return alert('請輸入地點');
+
+                fetch(`${API_URL}/${groupId}`)
+                    .then((res) => res.json())
+                    .then((oldData) => {
+                        if (oldData.officeOption.includes(newOffice)) {
+                            alert('地點已存在');
+                            return;
+                        }
+
+                        const updatedList = [...oldData.officeOption, newOffice];
+
+                        return fetch(`${API_URL}/${groupId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                currentOffice: oldData.currentOffice,
+                                officeOption: updatedList,
+                            }),
+                        });
+                    })
+                    .then((res) => res?.json?.())
+                    .then((data) => {
+                        if (data) {
+                            document.getElementById('newOfficeInput').value = '';
+                            renderDashboard(data);
+                        }
+                    })
+                    .catch((err) => alert('新增失敗：' + err.message));
+            }
+        </script>
     </body>
 </html>

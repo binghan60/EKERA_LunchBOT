@@ -12,7 +12,7 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+// app.use(express.json());
 // app.use(bodyParser.json());
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
