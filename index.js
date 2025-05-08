@@ -71,6 +71,45 @@ async function handleEvent(event) {
 
     const msg = event.message.text.trim();
 
+    if (msg === '/機器人') {
+        let groupSetting = await GroupSetting.findOne({ groupId });
+        if (!groupSetting) {
+            groupSetting = await GroupSetting.create({
+                groupId,
+                currentOffice: '未設定',
+                officeOption: [],
+            });
+
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `🤖 已為這個群組建立初始設定，請使用 /h 查詢指令`,
+            });
+        }
+    }
+
+    const groupSetting = await GroupSetting.findOne({ groupId });
+    if (!groupSetting) {
+        return client.replyMessage(event.replyToken, {
+            type: 'text',
+            text: `😿 這個群組還沒有設定地點，請先設定！`,
+        });
+    }
+
+    if (msg === '/h') {
+        const groupSetting = await GroupSetting.findOne({ groupId });
+        if (!groupSetting) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: `😿 這個群組還沒有設定地點，請先設定！`,
+            });
+        }
+
+        return client.replyMessage(event.replyToken, {
+            type: 'text',
+            text: `指令列表：\n\n` + `/新增餐廳 餐廳名稱 辦公室 - 新增餐廳到指定辦公室\n` + `/刪除餐廳 餐廳名稱 辦公室 - 刪除指定辦公室的餐廳\n` + `/辦公室列表 - 列出所有辦公室\n` + `/切換辦公室 辦公室名稱 - 切換目前辦公室\n` + `/目前餐廳 - 列出目前辦公室的餐廳\n` + `/全部餐廳 - 列出所有餐廳\n` + `吃飯 - 抽出一間餐廳\n`,
+        });
+    }
+
     if (msg === '/辦公室列表') {
         const offices = await GroupRestaurant.distinct('office', { groupId });
         if (!offices.length) {
@@ -109,7 +148,6 @@ async function handleEvent(event) {
             text: `📍 已切換至「${newOffice}」喵！`,
         });
     }
-
     if (msg === '/全部餐廳') {
         const restaurants = await Restaurant.find().sort({ name: 1 }).select('name');
         if (!restaurants.length) {
@@ -231,7 +269,7 @@ async function handleEvent(event) {
         });
     }
 
-    if (event.message.text === '抽獎') {
+    if (event.message.text === '吃飯') {
         const groupSetting = await GroupSetting.findOne({ groupId });
         if (!groupSetting) {
             return client.replyMessage(event.replyToken, {
