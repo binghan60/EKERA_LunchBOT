@@ -8,7 +8,9 @@ router.get('/', (req, res) => {
 
 router.get('/:id', (req, res) => {
     const groupId = req.params.id;
+    console.log('Group ID:', groupId);
     const groupSetting = GroupSetting.findOne({ groupId });
+    console.log(groupSetting);
     if (!groupSetting) {
         return res.status(404).send('Group setting not found');
     }
