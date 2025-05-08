@@ -87,14 +87,6 @@ async function handleEvent(event) {
         }
     }
 
-    const groupSetting = await GroupSetting.findOne({ groupId });
-    if (!groupSetting) {
-        return client.replyMessage(event.replyToken, {
-            type: 'text',
-            text: `😿 這個群組還沒有設定地點，請先設定！`,
-        });
-    }
-
     if (msg === '/h') {
         const groupSetting = await GroupSetting.findOne({ groupId });
         if (!groupSetting) {
