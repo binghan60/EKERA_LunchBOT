@@ -7,10 +7,13 @@ const GroupRestaurant = require('./models/GroupRestaurant');
 const GroupSetting = require('./models/GroupSetting');
 const restaurantRouter = require('./routes/restaurantRouter.js');
 const groupSettingRouter = require('./routes/groupSettingRouter.js');
+const cors = require('cors');
 // const bodyParser = require('body-parser');
 
 const app = express();
-
+app.use(cors());
+app.use(express.json());
+// app.use(bodyParser.json());
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
     channelSecret: process.env.CHANNEL_SECRET,
