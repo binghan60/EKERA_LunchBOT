@@ -10,10 +10,8 @@ const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 
-// 把 public 設為靜態資料夾
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(cors());
 // app.use(bodyParser.json());
