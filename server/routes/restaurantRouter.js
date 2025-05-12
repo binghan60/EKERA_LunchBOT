@@ -1,10 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const restaurant = require('../models/restaurant');
 
-router.get('/', (req, res) => {
-    res.send('Hello from restaurant router!');
+router.get('/', async (req, res) => {
+    try {
+        const restaurants = await restaurant.find();
+        res.status(200).json(restaurants);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching restaurants', error });
+    }
 });
-
 router.post('/add', async (req, res) => {
     res.send('Add restaurant endpoint');
 });

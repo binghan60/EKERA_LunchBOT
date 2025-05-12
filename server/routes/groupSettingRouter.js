@@ -150,9 +150,6 @@ const GroupSetting = require('../models/GroupSetting');
 
 // 取得指定群組設定（Read）
 
-router.get('/', async (req, res) => {
-    res.status(200).json('test');
-});
 
 router.get('/:id', async (req, res) => {
     try {
