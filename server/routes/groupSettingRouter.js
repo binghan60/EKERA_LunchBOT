@@ -2,11 +2,6 @@ const express = require('express');
 const router = express.Router();
 const GroupSetting = require('../models/GroupSetting');
 
-// 測試用
-router.get('/', (req, res) => {
-    res.send('Hello from group setting router!');
-});
-
 /**
  * @swagger
  * tags:
@@ -17,20 +12,7 @@ router.get('/', (req, res) => {
 /**
  * @swagger
  * /group-settings:
- *   get:
- *     tags:
- *       - GroupSetting
- *     summary: 測試用 API
- *     description: 測試用的 API，回傳簡單的訊息。
- *     responses:
- *       200:
- *         description: 成功回傳訊息
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *               example: Hello from group setting router!
- *
+ *   
  *   post:
  *     tags:
  *       - GroupSetting
@@ -135,25 +117,7 @@ router.get('/', (req, res) => {
  *       500:
  *         description: 伺服器錯誤
  *
- *   delete:
- *     tags:
- *       - GroupSetting
- *     summary: 刪除群組設定
- *     description: 根據群組 ID 刪除群組設定。
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         description: 群組 ID
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: 成功刪除群組設定
- *       404:
- *         description: 找不到群組設定
- *       500:
- *         description: 伺服器錯誤
+
  */
 
 /**
@@ -247,21 +211,41 @@ router.put('/:id', async (req, res) => {
     }
 });
 
+//  *   delete:
+//  *     tags:
+//  *       - GroupSetting
+//  *     summary: 刪除群組設定
+//  *     description: 根據群組 ID 刪除群組設定。
+//  *     parameters:
+//  *       - name: id
+//  *         in: path
+//  *         required: true
+//  *         description: 群組 ID
+//  *         schema:
+//  *           type: string
+//  *     responses:
+//  *       200:
+//  *         description: 成功刪除群組設定
+//  *       404:
+//  *         description: 找不到群組設定
+//  *       500:
+//  *         description: 伺服器錯誤
+
 // 刪除群組設定（Delete）
-router.delete('/:id', async (req, res) => {
-    try {
-        const groupId = req.params.id;
+// router.delete('/:id', async (req, res) => {
+//     try {
+//         const groupId = req.params.id;
 
-        const deleted = await GroupSetting.findOneAndDelete({ groupId });
+//         const deleted = await GroupSetting.findOneAndDelete({ groupId });
 
-        if (!deleted) {
-            return res.status(404).send('Group setting not found');
-        }
+//         if (!deleted) {
+//             return res.status(404).send('Group setting not found');
+//         }
 
-        res.status(200).send('Group setting deleted');
-    } catch (err) {
-        res.status(500).send('Server error');
-    }
-});
+//         res.status(200).send('Group setting deleted');
+//     } catch (err) {
+//         res.status(500).send('Server error');
+//     }
+// });
 
 module.exports = router;
