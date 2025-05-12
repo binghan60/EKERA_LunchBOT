@@ -8,12 +8,9 @@ const GroupSetting = require('./models/GroupSetting');
 const restaurantRouter = require('./routes/restaurantRouter.js');
 const groupSettingRouter = require('./routes/groupSettingRouter.js');
 const cors = require('cors');
-// const bodyParser = require('body-parser');
 
 const app = express();
 app.use(cors());
-// app.use(express.json());
-// app.use(bodyParser.json());
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
     channelSecret: process.env.CHANNEL_SECRET,
@@ -43,17 +40,6 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
         res.status(500).end();
     }
 });
-
-// API TODO
-// 1. 新增餐廳
-// 2. 刪除餐廳
-// 3. 列出所有餐廳
-// 4. 列出所有辦公室
-// 5. 切換辦公室
-// 6. 列出目前辦公室的餐廳
-// 7. 抽獎
-// 8. 列出所有餐廳的詳細資訊
-// 9. Group基本設定
 
 async function handleEvent(event) {
     if (event.type !== 'message' || event.message.type !== 'text') return Promise.resolve(null);
