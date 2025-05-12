@@ -2,17 +2,20 @@ require('dotenv').config();
 const express = require('express');
 const line = require('@line/bot-sdk');
 const mongoose = require('mongoose');
-const Restaurant = require('./models/Restaurant');
-const GroupRestaurant = require('./models/GroupRestaurant');
-const GroupSetting = require('./models/GroupSetting');
 const apiRoutes = require('./routes/apiRouter.js');
 const webhookRoutes = require('./routes/webhookRouter.js');
 const cors = require('cors');
 // const bodyParser = require('body-parser');
+const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 
+// 把 public 設為靜態資料夾
 const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(cors());
-app.use(express.json());
 // app.use(bodyParser.json());
 const config = {
     channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
@@ -26,9 +29,6 @@ mongoose
     .catch((err) => {
         console.log('資料庫連線失敗', err);
     });
-app.get('/', (req, res) => {
-    res.send('Hello World! This is a LINE Bot server.');
-});
 app.use('/api', apiRoutes);
 app.post('/webhook', line.middleware(config), webhookRoutes(config));
 
@@ -46,4 +46,5 @@ app.post('/webhook', line.middleware(config), webhookRoutes(config));
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
     console.log(`✅ LINE Bot server running at http://localhost:${port}`);
+    console.log(`Swagger docs: http://localhost:${port}/api-docs`);
 });
