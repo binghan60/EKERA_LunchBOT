@@ -141,18 +141,50 @@ async function drawRestaurant(groupId, office) {
     return null;
 }
 
-// 新增：發送 LINE Flex Message 的函數
-async function sendLunchLineMessage(toGroupId, restaurant) {
-    // 從 restaurant 物件中獲取資訊，如果沒有則使用預設值
-    const restaurantName = restaurant.name || '今日神秘店家';
-    const restaurantAddress = restaurant.address || '店家未提供地址';
-    const restaurantPhone = restaurant.phone || '店家未提供電話';
-    // 預設圖片，或從 restaurant.imageUrl 獲取
-    const restaurantImage = restaurant.imageUrl || 'https://imageproxy.pixnet.cc/imgproxy?url=https://pic.pimg.tw/jetpeter/1733120100-2838930736-g_n.jpg';
-    // 預設地圖 URI，或根據 restaurant.mapUrl 或 restaurant.address 生成
-    const mapUri = restaurant.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(restaurantAddress)}`;
-    const telUri = restaurant.phone ? `tel:${restaurant.phone}` : '#';
+// 在你的 Node.js API 路由檔案中
 
+async function sendLunchLineMessage(toGroupId, restaurant) {
+    const restaurantName = restaurant.name || '今日神秘店家';
+    // 用於顯示的地址，如果 restaurant.address 不存在，則顯示 "店家未提供地址"
+    const displayAddress = restaurant.address || '店家未提供地址';
+    // 用於地圖URI的實際地址，如果 restaurant.address 不存在，則為 null/undefined
+    const mapAddress = restaurant.address;
+    const restaurantPhone = restaurant.phone || null; // 如果沒有電話，設為 null
+    const restaurantImage = restaurant.imageUrl || 'https://imageproxy.pixnet.cc/imgproxy?url=https://pic.pimg.tw/jetpeter/1733120100-2838930736-g_n.jpg'; // 預設圖片
+
+    const footerButtons = []; // 初始化一個空的按鈕陣列
+
+    // 1. 地圖導航按鈕
+    if (mapAddress && typeof mapAddress === 'string' && mapAddress.trim() !== '') {
+        footerButtons.push({
+            type: 'button',
+            style: 'link',
+            height: 'sm',
+            action: {
+                type: 'uri',
+                label: '地圖導航',
+                uri: `https://maps.google.com/?q=${encodeURIComponent(mapAddress)}`, // 正確的Google Maps URI
+            },
+        });
+    }
+
+    // 2. 撥打電話按鈕
+    // 基本的電話號碼格式檢查 (只允許數字, +, -, (, ))，並確保不為空
+    if (restaurantPhone && typeof restaurantPhone === 'string' && /^[0-9+()\-\s]+$/.test(restaurantPhone.trim())) {
+        const trimmedPhone = restaurantPhone.trim();
+        footerButtons.push({
+            type: 'button',
+            style: 'link',
+            height: 'sm',
+            action: {
+                type: 'uri',
+                label: '撥打電話',
+                uri: `tel:${trimmedPhone}`, // 確保是有效的 tel: URI
+            },
+        });
+    }
+
+    // --- 組合 Flex Message ---
     const flexContent = {
         type: 'bubble',
         hero: {
@@ -185,7 +217,7 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
                             spacing: 'sm',
                             contents: [
                                 { type: 'text', text: '📍 地址', color: '#aaaaaa', size: 'sm', flex: 1 },
-                                { type: 'text', text: restaurantAddress, wrap: true, color: '#666666', size: 'sm', flex: 5 },
+                                { type: 'text', text: displayAddress, wrap: true, color: '#666666', size: 'sm', flex: 5 },
                             ],
                         },
                         {
@@ -194,34 +226,29 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
                             spacing: 'sm',
                             contents: [
                                 { type: 'text', text: '📞 電話', color: '#aaaaaa', size: 'sm', flex: 1 },
-                                { type: 'text', text: restaurantPhone, wrap: true, color: '#666666', size: 'sm', flex: 5 },
+                                // 顯示用電話，如果 restaurantPhone 為 null，則顯示 "店家未提供電話"
+                                { type: 'text', text: restaurantPhone || '店家未提供電話', wrap: true, color: '#666666', size: 'sm', flex: 5 },
                             ],
                         },
                     ],
                 },
             ],
         },
-        footer: {
-            type: 'box',
-            layout: 'horizontal',
-            spacing: 'sm',
-            contents: [
-                {
-                    type: 'button',
-                    style: 'link',
-                    height: 'sm',
-                    action: { type: 'uri', label: '地圖導航', uri: mapUri },
-                },
-                {
-                    type: 'button',
-                    style: 'link',
-                    height: 'sm',
-                    action: { type: 'uri', label: '撥打電話', uri: telUri },
-                },
-            ],
-            flex: 0,
-        },
+        // 可選：如果 footerButtons 陣列中有按鈕，才加入 footer
+        // (下面的程式碼會處理這個邏輯)
     };
+
+    // 只有當 footerButtons 陣列中確實有按鈕時，才為 flexContent 添加 footer
+    if (footerButtons.length > 0) {
+        flexContent.footer = {
+            type: 'box',
+            // 如果只有一個按鈕，可以考慮使用 "vertical" layout，否則用 "horizontal"
+            layout: footerButtons.length === 1 ? 'vertical' : 'horizontal',
+            spacing: 'sm',
+            contents: footerButtons,
+            flex: 0,
+        };
+    }
 
     const payload = {
         to: toGroupId,
@@ -229,7 +256,7 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
             {
                 type: 'flex',
                 altText: `今日午餐推薦：${restaurantName}`,
-                contents: flexContent,
+                contents: flexContent, // 使用可能包含或不包含 footer 的 flexContent
             },
         ],
     };
@@ -237,11 +264,12 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
     const config = {
         headers: {
             'Content-Type': 'application/json',
+            // 確保 LINE_CHANNEL_ACCESS_TOKEN 在此函數作用域之外已定義
             Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
         },
     };
 
-    // 使用 axios 發送請求到 LINE API
+    // 確保 LINE_PUSH_API_URL 在此函數作用域之外已定義
     return axios.post(LINE_PUSH_API_URL, payload, config);
 }
 
