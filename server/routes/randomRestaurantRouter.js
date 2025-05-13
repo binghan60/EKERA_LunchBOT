@@ -14,113 +14,118 @@ const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
 /**
  * @swagger
  * /random-restaurant:
- * post: # <--- 改為 post
- * tags:
- * - RandomRestaurant
- * summary: 隨機抽取餐廳並推播 LINE 訊息
- * description: 根據提供的群組 ID，隨機抽取一間該群組設定地點的活躍餐廳，並將餐廳資訊以 LINE Flex Message 推播到該群組設定的 LINE 群組。
- * requestBody: # <--- 新增 requestBody 來定義請求主體
- * required: true
- * content:
- * application/json:
- * schema:
- * type: object
- * required:
- * - groupId
- * properties:
- * groupId:
- * type: string
- * description: 群組的唯一識別碼。用於查找群組設定及對應的 LINE 群組 ID。
- * example: "Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
- * responses:
- * '200':
- * description: 成功抽取餐廳並已成功推播 LINE 訊息。
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * message:
- * type: string
- * example: "餐廳已抽取並成功推播 LINE 訊息。"
- * restaurantName:
- * type: string
- * description: 抽中的餐廳名稱。
- * example: "美味食堂"
- * linePushStatus:
- * type: string
- * example: "Success"
- * linePushResponse:
- * type: object
- * description: LINE Messaging API 的成功回應。
- * example: { "sentMessages": [ { "id": "...", "quoteToken": "..." } ] }
- * '400':
- * description: 用戶端請求錯誤。可能原因包括請求主體缺少 groupId、群組未設定地點、找不到對應的 LINE 群組 ID、或群組內沒有可抽取的餐廳。
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * message:
- * type: string
- * examples:
- * missingGroupId: "請求主體 (Request body) 中缺少 groupId"
- * noGroupSetting: "這個群組還沒有設定地點，請先設定！"
- * noLineGroup: "無法確定要推播的 LINE 群組 ID，請檢查群組設定中的 lineGroupId 欄位。"
- * noRestaurants: "沒有可以抽的餐廳，請先新增幾家！"
- * '500':
- * description: 伺服器端錯誤。可能是成功抽取餐廳但 LINE 推播失敗，或發生其他未預期的伺服器內部錯誤。
- * content:
- * application/json:
- * schema:
- * oneOf:
- * - type: object
- * title: LinePushFailedError
- * description: 成功抽取餐廳，但 LINE 推播失敗。
- * required:
- * - message
- * - restaurantName
- * - linePushStatus
- * - errorDetails
- * properties:
- * message:
- * type: string
- * example: "成功抽取餐廳，但 LINE 推播失敗。"
- * restaurantName:
- * type: string
- * example: "美味食堂"
- * linePushStatus:
- * type: string
- * example: "Failed"
- * errorDetails:
- * type: object
- * description: LINE API 的錯誤回應或錯誤訊息。
- * properties:
- * message:
- * type: string
- * example: "A message (messages[0]) in the request body is invalid"
- * details:
- * type: array
- * items:
- * type: object
- * properties:
- * message:
- * type: string
- * property:
- * type: string
- * - type: object
- * title: GenericServerError
- * description: 一般的伺服器內部錯誤。
- * required:
- * - message
- * properties:
- * message:
- * type: string
- * example: "伺服器內部錯誤"
- * error:
- * type: string
- * description: 錯誤的詳細訊息（若存在）。
+ *   post:
+ *     tags:
+ *       - RandomRestaurant
+ *     summary: 隨機抽取餐廳並推播 LINE 訊息
+ *     description: 根據提供的群組 ID，隨機抽取一間該群組設定地點的活躍餐廳，並將餐廳資訊以 LINE Flex Message 推播到該群組設定的 LINE 群組。
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - groupId
+ *             properties:
+ *               groupId:
+ *                 type: string
+ *                 description: 群組的唯一識別碼。用於查找群組設定及對應的 LINE 群組 ID。
+ *                 example: "Cxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ *     responses:
+ *       '200':
+ *         description: 成功抽取餐廳並已成功推播 LINE 訊息。
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "餐廳已抽取並成功推播 LINE 訊息。"
+ *                 restaurantName:
+ *                   type: string
+ *                   description: 抽中的餐廳名稱。
+ *                   example: "美味食堂"
+ *                 linePushStatus:
+ *                   type: string
+ *                   example: "Success"
+ *                 linePushResponse:
+ *                   type: object
+ *                   description: LINE Messaging API 的成功回應。
+ *                   example: { "sentMessages": [ { "id": "...", "quoteToken": "..." } ] }
+ *       '400':
+ *         description: 用戶端請求錯誤。可能原因包括請求主體缺少 groupId、群組未設定地點、找不到對應的 LINE 群組 ID、或群組內沒有可抽取的餐廳。
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *               examples:
+ *                 missingGroupId:
+ *                   value: "請求主體 (Request body) 中缺少 groupId"
+ *                 noGroupSetting:
+ *                   value: "這個群組還沒有設定地點，請先設定！"
+ *                 noLineGroup:
+ *                   value: "無法確定要推播的 LINE 群組 ID，請檢查群組設定中的 lineGroupId 欄位。"
+ *                 noRestaurants:
+ *                   value: "沒有可以抽的餐廳，請先新增幾家！"
+ *       '500':
+ *         description: 伺服器端錯誤。可能是成功抽取餐廳但 LINE 推播失敗，或發生其他未預期的伺服器內部錯誤。
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   title: LinePushFailedError
+ *                   description: 成功抽取餐廳，但 LINE 推播失敗。
+ *                   required:
+ *                     - message
+ *                     - restaurantName
+ *                     - linePushStatus
+ *                     - errorDetails
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "成功抽取餐廳，但 LINE 推播失敗。"
+ *                     restaurantName:
+ *                       type: string
+ *                       example: "美味食堂"
+ *                     linePushStatus:
+ *                       type: string
+ *                       example: "Failed"
+ *                     errorDetails:
+ *                       type: object
+ *                       description: LINE API 的錯誤回應或錯誤訊息。
+ *                       properties:
+ *                         message:
+ *                           type: string
+ *                           example: "A message (messages[0]) in the request body is invalid"
+ *                         details:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *                             properties:
+ *                               message:
+ *                                 type: string
+ *                               property:
+ *                                 type: string
+ *                 - type: object
+ *                   title: GenericServerError
+ *                   description: 一般的伺服器內部錯誤。
+ *                   required:
+ *                     - message
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "伺服器內部錯誤"
+ *                     error:
+ *                       type: string
+ *                       description: 錯誤的詳細訊息（若存在）。
  */
+
 router.post('/', async (req, res) => {
     // <--- router.get 改為 router.post
     try {
