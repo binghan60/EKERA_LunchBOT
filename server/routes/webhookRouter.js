@@ -45,8 +45,8 @@ async function handleEvent(event, client) {
         if (!groupSetting) {
             groupSetting = await GroupSetting.create({
                 groupId,
-                currentOffice: '未設定',
-                officeOption: [],
+                currentOffice: 'default',
+                officeOption: ['default'],
             });
 
             return client.replyMessage(event.replyToken, {

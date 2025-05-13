@@ -150,7 +150,6 @@ const GroupSetting = require('../models/GroupSetting');
 
 // 取得指定群組設定（Read）
 
-
 router.get('/:id', async (req, res) => {
     try {
         const groupId = req.params.id;
