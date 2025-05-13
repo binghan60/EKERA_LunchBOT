@@ -69,7 +69,7 @@ const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
  *                 noGroupSetting:
  *                   value: "這個群組還沒有設定地點，請先設定！"
  *                 noLineGroup:
- *                   value: "無法確定要推播的 LINE 群組 ID，請檢查群組設定中的 lineGroupId 欄位。"
+ *                   value: "無法確定要推播的 LINE 群組 ID，請檢查群組設定中的 groupId 欄位。"
  *                 noRestaurants:
  *                   value: "沒有可以抽的餐廳，請先新增幾家！"
  *       '500':
@@ -143,10 +143,10 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ message: '這個群組還沒有設定地點，請先設定！' });
         }
 
-        // 假設 GroupSetting 中儲存了對應的 LINE Group ID，欄位名稱為 lineGroupId
-        const targetLineGroupId = groupSetting.lineGroupId;
-        if (!targetLineGroupId) {
-            return res.status(400).json({ message: '無法確定要推播的 LINE 群組 ID，請檢查群組設定中的 lineGroupId 欄位。' });
+        // 假設 GroupSetting 中儲存了對應的 LINE Group ID，欄位名稱為 groupId
+        const targetGroupId = groupSetting.groupId;
+        if (!targetGroupId) {
+            return res.status(400).json({ message: '無法確定要推播的 LINE 群組 ID，請檢查群組設定中的 groupId 欄位。' });
         }
 
         const currentOffice = groupSetting.currentOffice;
@@ -157,7 +157,7 @@ router.post('/', async (req, res) => {
         if (restaurant && restaurant.name) {
             // 成功抽取到餐廳，現在發送 LINE 訊息
             try {
-                const lineResponse = await sendLunchLineMessage(targetLineGroupId, restaurant);
+                const lineResponse = await sendLunchLineMessage(targetGroupId, restaurant);
                 // console.log('LINE push successful:', lineResponse.data); // 可以保留用於調試
                 return res.status(200).json({
                     message: '餐廳已抽取並成功推播 LINE 訊息。',
