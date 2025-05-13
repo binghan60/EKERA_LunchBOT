@@ -8,7 +8,7 @@ const Restaurant = require('../models/Restaurant');
 require('dotenv').config(); // 確保在檔案頂部加載環境變數
 
 // --- LINE 設定 ---
-const LINE_CHANNEL_ACCESS_TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN; // 從環境變數讀取
+const LINE_CHANNEL_ACCESS_TOKEN = process.env.CHANNEL_ACCESS_TOKEN; // 從環境變數讀取
 const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
 
 /**
