@@ -129,7 +129,7 @@ const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
 router.get('/', async (req, res) => {
     try {
         const notificationGroup = await GroupSetting.findOne({ lunchNotification: true });
-        res.status(200).json({ message: '成功獲取通知群組', data: notificationGroup });
+        res.status(200).json({ message: '成功獲取通知群組', data: notificationGroup }).select('groupId lunchNotification');
     } catch (error) {
         console.error('Error fetching notification group:', error);
         return res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
@@ -137,13 +137,10 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    // <--- router.get 改為 router.post
     try {
-        const { groupId } = req.body; // <--- 從 req.body 獲取 groupId
+        const { groupId } = req.body;
 
         if (!groupId) {
-            // 注意：通常 Express 的 body-parser (如 express.json()) 會處理空 body 的情況，
-            // 但明確檢查 groupId 是否存在於 body 中是個好習慣。
             return res.status(400).json({ message: '請求主體 (Request body) 中缺少 groupId' });
         }
 
