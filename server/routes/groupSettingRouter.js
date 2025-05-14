@@ -105,6 +105,10 @@ const GroupSetting = require('../models/GroupSetting');
  *                   type: string
  *                 description: 辦公室選項列表
  *                 example: ["台北辦公室", "新竹辦公室"]
+ *               lunchNotification:  
+ *                 type: boolean
+ *                 description: 是否開啟午餐通知
+ *                 example: true
  *     responses:
  *       200:
  *         description: 成功更新群組設定
@@ -131,6 +135,10 @@ const GroupSetting = require('../models/GroupSetting');
  *           type: string
  *           description: 群組 ID
  *           example: Uaca9aaaf9f872b1871196f9481ea0839
+ *         lunchNotification:
+ *           type: boolean
+ *           description: 是否開啟午餐通知
+ *           example: true
  *         currentOffice:
  *           type: string
  *           description: 當前選中的辦公室
@@ -166,7 +174,7 @@ router.get('/:id', async (req, res) => {
 // 建立群組設定（Create）
 router.post('/', async (req, res) => {
     try {
-        const { groupId, currentOffice, officeOption } = req.body;
+        const { groupId, lunchNotification, currentOffice, officeOption } = req.body;
 
         const existing = await GroupSetting.findOne({ groupId });
         if (existing) {
@@ -175,6 +183,7 @@ router.post('/', async (req, res) => {
 
         const newSetting = new GroupSetting({
             groupId,
+            lunchNotification,
             currentOffice,
             officeOption,
         });
@@ -190,17 +199,21 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const groupId = req.params.id;
-        const { currentOffice, officeOption } = req.body;
+        const updateFields = {};
 
-        const updated = await GroupSetting.findOneAndUpdate(
-            { groupId },
-            {
-                currentOffice,
-                officeOption,
-                updatedAt: Date.now(),
-            },
-            { new: true }
-        );
+        if (req.body.lunchNotification !== undefined) {
+            updateFields.lunchNotification = req.body.lunchNotification;
+        }
+        if (req.body.currentOffice !== undefined) {
+            updateFields.currentOffice = req.body.currentOffice;
+        }
+        if (req.body.officeOption !== undefined) {
+            updateFields.officeOption = req.body.officeOption;
+        }
+
+        updateFields.updatedAt = Date.now(); // 加入更新時間
+
+        const updated = await GroupSetting.findOneAndUpdate({ groupId }, { $set: updateFields }, { new: true });
 
         if (!updated) {
             return res.status(404).send('Group setting not found');
