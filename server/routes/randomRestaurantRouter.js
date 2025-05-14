@@ -126,6 +126,15 @@ const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
  *                       description: 錯誤的詳細訊息（若存在）。
  */
 
+router.get('/', async (req, res) => {
+    try {
+        const notificationGroup = await GroupSetting.findOne({ lunchNotification: true });
+    } catch (error) {
+        console.error('Error fetching notification group:', error);
+        return res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
+    }
+});
+
 router.post('/', async (req, res) => {
     // <--- router.get 改為 router.post
     try {
@@ -207,7 +216,6 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
         console.error('LINE_CHANNEL_ACCESS_TOKEN is not defined. Please check environment variables.');
         throw new Error('LINE Channel Access Token is missing.'); // 內部錯誤，不應直接暴露給用戶
     }
-
     const restaurantName = restaurant.name || '今日神秘店家';
     const displayAddress = restaurant.address || '店家未提供地址';
     const mapAddress = restaurant.address;
