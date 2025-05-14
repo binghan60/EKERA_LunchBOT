@@ -128,7 +128,7 @@ const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
 
 router.get('/', async (req, res) => {
     try {
-        const notificationGroups = await GroupSetting.find({ lunchNotification: true }).select('groupId lunchNotification -_id');
+        const notificationGroups = await GroupSetting.find({ lunchNotification: true }).select('groupId -_id');
         res.status(200).json({ message: '成功獲取通知群組', data: notificationGroups });
     } catch (error) {
         console.error('Error fetching notification group:', error);
