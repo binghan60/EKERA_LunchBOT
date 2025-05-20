@@ -5,13 +5,10 @@ const mongoose = require('mongoose');
 const apiRoutes = require('./routes/apiRouter.js');
 const webhookRoutes = require('./routes/webhookRouter.js');
 const cors = require('cors');
-// const bodyParser = require('body-parser');
-const path = require('path');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
 
 const app = express();
-app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(cors());
 // app.use(bodyParser.json());
