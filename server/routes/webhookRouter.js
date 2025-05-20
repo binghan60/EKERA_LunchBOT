@@ -4,48 +4,6 @@ const GroupSetting = require('../models/GroupSetting');
 const Restaurant = require('../models/Restaurant');
 const GroupRestaurant = require('../models/GroupRestaurant');
 const mongoose = require('mongoose');
-<<<<<<<< HEAD:server/index.js
-const Restaurant = require('./models/Restaurant');
-const GroupRestaurant = require('./models/GroupRestaurant');
-const GroupSetting = require('./models/GroupSetting');
-const restaurantRouter = require('./routes/restaurantRouter.js');
-const groupSettingRouter = require('./routes/groupSettingRouter.js');
-const cors = require('cors');
-
-const app = express();
-app.use(cors());
-const config = {
-    channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
-    channelSecret: process.env.CHANNEL_SECRET,
-};
-
-const client = new line.Client(config);
-mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => {
-        console.log('資料庫連線成功');
-    })
-    .catch((err) => {
-        console.log('資料庫連線失敗', err);
-    });
-app.get('/', (req, res) => {
-    res.send('Hello World! This is a LINE Bot server.');
-});
-app.use('/group-settings', groupSettingRouter);
-app.use('/restaurant', restaurantRouter);
-app.post('/webhook', line.middleware(config), async (req, res) => {
-    try {
-        const events = req.body.events;
-        const results = await Promise.all(events.map(handleEvent));
-        res.json(results);
-    } catch (err) {
-        console.error(err);
-        res.status(500).end();
-    }
-});
-
-async function handleEvent(event) {
-========
 
 module.exports = (config) => {
     const router = express.Router();
@@ -66,7 +24,6 @@ module.exports = (config) => {
 };
 
 async function handleEvent(event, client) {
->>>>>>>> dev:server/routes/webhookRouter.js
     if (event.type !== 'message' || event.message.type !== 'text') return Promise.resolve(null);
 
     const sourceType = event.source.type;
@@ -99,8 +56,6 @@ async function handleEvent(event, client) {
         }
     }
 
-<<<<<<<< HEAD:server/index.js
-========
     // 如果沒有設定過，返回錯誤提示
     const groupSetting = await GroupSetting.findOne({ groupId });
     if (!groupSetting) {
@@ -111,7 +66,6 @@ async function handleEvent(event, client) {
     }
 
     // /h 指令顯示指令列表
->>>>>>>> dev:server/routes/webhookRouter.js
     if (msg === '/h') {
         return client.replyMessage(event.replyToken, {
             type: 'text',
