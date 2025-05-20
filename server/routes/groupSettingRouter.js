@@ -174,11 +174,7 @@ router.get('/:id', async (req, res) => {
 // 建立群組設定（Create）
 router.post('/', async (req, res) => {
     try {
-<<<<<<< HEAD
-        const { groupId, currentOffice, officeOption } = req.body;
-=======
         const { groupId, lunchNotification, currentOffice, officeOption } = req.body;
->>>>>>> dev
 
         const existing = await GroupSetting.findOne({ groupId });
         if (existing) {
@@ -187,10 +183,7 @@ router.post('/', async (req, res) => {
 
         const newSetting = new GroupSetting({
             groupId,
-<<<<<<< HEAD
-=======
             lunchNotification,
->>>>>>> dev
             currentOffice,
             officeOption,
         });
@@ -206,19 +199,6 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
     try {
         const groupId = req.params.id;
-<<<<<<< HEAD
-        const { currentOffice, officeOption } = req.body;
-
-        const updated = await GroupSetting.findOneAndUpdate(
-            { groupId },
-            {
-                currentOffice,
-                officeOption,
-                updatedAt: Date.now(),
-            },
-            { new: true }
-        );
-=======
         const updateFields = {};
 
         if (req.body.lunchNotification !== undefined) {
@@ -234,7 +214,6 @@ router.put('/:id', async (req, res) => {
         updateFields.updatedAt = Date.now(); // 加入更新時間
 
         const updated = await GroupSetting.findOneAndUpdate({ groupId }, { $set: updateFields }, { new: true });
->>>>>>> dev
 
         if (!updated) {
             return res.status(404).send('Group setting not found');
@@ -246,24 +225,6 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-<<<<<<< HEAD
-// 刪除群組設定（Delete）
-router.delete('/:id', async (req, res) => {
-    try {
-        const groupId = req.params.id;
-
-        const deleted = await GroupSetting.findOneAndDelete({ groupId });
-
-        if (!deleted) {
-            return res.status(404).send('Group setting not found');
-        }
-
-        res.status(200).send('Group setting deleted');
-    } catch (err) {
-        res.status(500).send('Server error');
-    }
-});
-=======
 //  *   delete:
 //  *     tags:
 //  *       - GroupSetting
@@ -300,6 +261,5 @@ router.delete('/:id', async (req, res) => {
 //         res.status(500).send('Server error');
 //     }
 // });
->>>>>>> dev
 
 module.exports = router;
