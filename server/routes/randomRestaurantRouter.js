@@ -212,7 +212,7 @@ router.post('/', async (req, res) => {
         const restaurant = await drawRestaurant(groupId, currentOffice);
 
         if (restaurant && restaurant.name) {
-            // 成功抽取到餐廳，現在發送 LINE 訊息
+            // 成功抽取到餐廳，發送 LINE 訊息
             try {
                 const lineResponse = await sendLunchLineMessage(targetGroupId, restaurant);
                 // console.log('LINE push successful:', lineResponse.data); // 可以保留用於調試
@@ -240,7 +240,6 @@ router.post('/', async (req, res) => {
     }
 });
 
-// 抽取餐廳的邏輯 (假設 Restaurant model 有 address, phone, imageUrl, mapUrl 等欄位)
 async function drawRestaurant(groupId, office) {
     const groupRestaurants = await GroupRestaurant.find({
         groupId,
@@ -262,7 +261,7 @@ async function drawRestaurant(groupId, office) {
 async function sendLunchLineMessage(toGroupId, restaurant) {
     if (!LINE_CHANNEL_ACCESS_TOKEN) {
         console.error('LINE_CHANNEL_ACCESS_TOKEN is not defined. Please check environment variables.');
-        throw new Error('LINE Channel Access Token is missing.'); // 內部錯誤，不應直接暴露給用戶
+        throw new Error('LINE Channel Access Token is missing.'); 
     }
     const restaurantName = restaurant.name || '今日神秘店家';
     const displayAddress = restaurant.address || '店家未提供地址';
@@ -305,8 +304,12 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
             type: 'image',
             url: restaurantImage,
             size: 'full',
-            aspectRatio: '20:13',
+            aspectRatio: '1:1',
             aspectMode: 'cover',
+            action: {
+                type: 'uri',
+                uri: restaurantImage,
+            },
         },
         body: {
             type: 'box',
@@ -315,7 +318,7 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
             contents: [
                 {
                     type: 'text',
-                    text: `🍱 今日推薦：${restaurantName}`,
+                    text: `🍱 今日推薦：\n${restaurantName}`,
                     wrap: true,
                     weight: 'bold',
                     size: 'lg',
@@ -330,7 +333,7 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
                             layout: 'baseline',
                             spacing: 'sm',
                             contents: [
-                                { type: 'text', text: '📍 地址', color: '#aaaaaa', size: 'sm', flex: 1 },
+                                { type: 'text', text: '地址', color: '#3C3C3C', size: 'sm', flex: 1 },
                                 { type: 'text', text: displayAddress, wrap: true, color: '#666666', size: 'sm', flex: 5 },
                             ],
                         },
@@ -339,7 +342,7 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
                             layout: 'baseline',
                             spacing: 'sm',
                             contents: [
-                                { type: 'text', text: '📞 電話', color: '#aaaaaa', size: 'sm', flex: 1 },
+                                { type: 'text', text: '電話', color: '#3C3C3C', size: 'sm', flex: 1 },
                                 { type: 'text', text: restaurantPhone || '店家未提供電話', wrap: true, color: '#666666', size: 'sm', flex: 5 },
                             ],
                         },
