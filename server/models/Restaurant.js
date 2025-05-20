@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 
 const restaurantSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    tags: [String],
     address: { type: String },
     phone: { type: String },
+    tags: [String],
     isActive: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now },
 });
