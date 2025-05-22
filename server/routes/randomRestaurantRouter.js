@@ -261,13 +261,13 @@ async function drawRestaurant(groupId, office) {
 async function sendLunchLineMessage(toGroupId, restaurant) {
     if (!LINE_CHANNEL_ACCESS_TOKEN) {
         console.error('LINE_CHANNEL_ACCESS_TOKEN is not defined. Please check environment variables.');
-        throw new Error('LINE Channel Access Token is missing.'); 
+        throw new Error('LINE Channel Access Token is missing.');
     }
     const restaurantName = restaurant.name || '今日神秘店家';
-    const displayAddress = restaurant.address || '店家未提供地址';
+    const displayAddress = restaurant?.address || '店家未提供地址';
     const mapAddress = restaurant.address;
-    const restaurantPhone = restaurant.phone || null;
-    const restaurantImage = restaurant.menu[0] || 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg';
+    const restaurantPhone = restaurant?.phone || null;
+    const restaurantImage = restaurant?.menu[0] || 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg';
 
     const footerButtons = [];
 
