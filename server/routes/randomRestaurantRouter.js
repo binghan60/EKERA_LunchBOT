@@ -267,7 +267,7 @@ async function sendLunchLineMessage(toGroupId, restaurant) {
     const displayAddress = restaurant?.address || '店家未提供地址';
     const mapAddress = restaurant.address;
     const restaurantPhone = restaurant?.phone || null;
-    const restaurantImage = restaurant?.menu[0] || 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg';
+    const restaurantImage = restaurant?.menu?.[0] || 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg';
 
     const footerButtons = [];
 
