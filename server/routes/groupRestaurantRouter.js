@@ -36,27 +36,36 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
     try {
-        const updateFields = {};
         const { office, isActiveInOffice, note } = req.body;
 
-        if (office !== undefined) updateFields.office = office;
-        if (isActiveInOffice !== undefined) updateFields.isActiveInOffice = isActiveInOffice;
-        if (note !== undefined) updateFields.note = note;
-        const groupRestaurant = await GroupRestaurant.findById(req.params.id);
-        const groupSetting = await GroupSetting.findOne({ groupId: groupRestaurant.groupId });
-        if (!groupSetting.officeOption.includes(office)) {
-            res.status(400).json({ message: `${office}不在群組辦公室列表` });
+        const updateFields = {};
+        if (office !== undefined) {
+            updateFields.office = office;
         }
-        console.log(groupSetting);
-        const updated = await GroupRestaurant.findByIdAndUpdate(req.params.id, { $set: updateFields }, { new: true });
+        if (isActiveInOffice !== undefined) {
+            updateFields.isActiveInOffice = isActiveInOffice;
+        }
+        if (note !== undefined) {
+            updateFields.note = note;
+        }
 
-        if (!updated) {
-            return res.status(404).json({ error: 'Group restaurant not found' });
+        const groupRestaurant = await GroupRestaurant.findById(req.params.id);
+        if (!groupRestaurant) {
+            return res.status(404).json({ message: 'Group restaurant not found' });
         }
+
+        if (office !== undefined) {
+            const groupSetting = await GroupSetting.findOne({ groupId: groupRestaurant.groupId });
+            if (!groupSetting || !groupSetting.officeOption.includes(office)) {
+                return res.status(400).json({ message: `${office} 不在群組辦公室列表中` });
+            }
+        }
+
+        const updated = await GroupRestaurant.findByIdAndUpdate(req.params.id, { $set: updateFields }, { new: true });
 
         res.status(200).json(updated);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: 'Error updating group restaurant', error });
     }
 });
