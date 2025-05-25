@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Restaurant = require('../models/Restaurant');
 const mongoose = require('mongoose');
+const cloudinary = require('../utils/cloudinary');
+const upload = require('../middleware/multer');
 
 router.get('/', async (req, res) => {
     try {
@@ -33,9 +35,9 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', upload.array('menu', 5), async (req, res) => {
     try {
-        const { groupId, name, address, phone, menu, tags, isActive } = req.body;
+        const { groupId, name, address, phone, tags, isActive } = req.body;
 
         if (!groupId || !name) {
             return res.status(400).json({ message: 'groupId、name 為必填欄位' });
@@ -46,10 +48,34 @@ router.post('/', async (req, res) => {
             return res.status(409).json({ message: `'${exists.name}'餐廳已存在` });
         }
 
-        const restaurant = new Restaurant({ groupId, name, tags, address, phone, menu, isActive });
+        // 上傳所有圖片到 Cloudinary
+        const menuImageUrls = [];
+
+        for (const file of req.files) {
+            const result = await new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream({ folder: `EKERA_lunch_BOT/${groupId}` }, (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                });
+                stream.end(file.buffer);
+            });
+            menuImageUrls.push(result.secure_url);
+        }
+
+        const restaurant = new Restaurant({
+            groupId,
+            name,
+            address,
+            phone,
+            tags,
+            isActive,
+            menu: menuImageUrls,
+        });
+
         await restaurant.save();
         res.status(201).json({ message: '新增成功', restaurant });
     } catch (error) {
+        console.error('新增餐廳錯誤:', error);
         res.status(500).json({ message: '新增餐廳時發生錯誤', error });
     }
 });
@@ -85,16 +111,44 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const groupId = req.body.groupId;
-        if (!groupId) return res.status(400).json({ message: 'groupId 是必填欄位' });
+        if (!groupId) {
+            return res.status(400).json({ message: 'groupId 是必填欄位' });
+        }
 
-        const restaurant = await Restaurant.findOneAndUpdate({ _id: req.params.id, groupId }, { $set: { isActive: false } }, { new: true });
+        // 先找到該餐廳
+        const restaurant = await Restaurant.findOne({ _id: req.params.id, groupId });
 
-        if (!restaurant) return res.status(404).json({ message: '找不到餐廳或無權限刪除' });
+        if (!restaurant) {
+            return res.status(404).json({ message: '找不到餐廳或無權限刪除' });
+        }
 
-        res.status(200).json({ message: '已刪除（軟刪除）', restaurant });
+        // 刪除所有 Cloudinary 上的圖片（如果有 menu）
+        if (Array.isArray(restaurant.menu)) {
+            for (const url of restaurant.menu) {
+                const publicId = extractPublicId(url);
+                if (publicId) {
+                    try {
+                        await cloudinary.uploader.destroy(publicId);
+                    } catch (err) {
+                        console.warn(`刪除圖片失敗: ${publicId}`, err);
+                    }
+                }
+            }
+        }
+
+        // 刪除餐廳紀錄
+        await Restaurant.deleteOne({ _id: req.params.id, groupId });
+
+        res.status(200).json({ message: '已成功刪除餐廳（包含菜單圖片）', restaurant });
     } catch (error) {
+        console.error('刪除餐廳錯誤:', error);
         res.status(500).json({ message: '刪除餐廳時發生錯誤', error });
     }
 });
+
+function extractPublicId(url) {
+    const match = url.match(/upload\/(?:v\d+\/)?(.+)\.(jpg|jpeg|png|webp|gif)/);
+    return match ? match[1] : null;
+}
 
 module.exports = router;
