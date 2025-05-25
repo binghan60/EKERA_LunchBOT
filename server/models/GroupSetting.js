@@ -4,7 +4,7 @@ const groupSettingSchema = new mongoose.Schema(
     {
         groupId: { type: String, required: true, unique: true },
         lunchNotification: { type: Boolean, default: false },
-        currentOffice: { type: String, required: true },
+        currentOffice: { type: String, default: 'default', required: true },
         officeOption: { type: [String], default: [] },
     },
     {
