@@ -6,10 +6,10 @@ const groupRestaurantSchema = new mongoose.Schema(
         office: { type: String, required: true, index: true },
         restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', required: true },
         isActiveInOffice: { type: Boolean, default: true },
-        note: String,
+        note: { type: String, default: '' },
     },
     {
-        timestamps: true, 
+        timestamps: true,
     }
 );
 groupRestaurantSchema.index({ groupId: 1, office: 1, restaurantId: 1 }, { unique: true });
