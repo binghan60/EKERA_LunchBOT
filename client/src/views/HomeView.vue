@@ -1,5 +1,11 @@
-<script setup></script>
+<script setup>
+import GroupSetting from '@/components/GroupSetting.vue'
+import { useRoute } from 'vue-router'
+const route = useRoute()
+
+const groupId = route.query.groupId
+</script>
 
 <template>
-  <h1 class="text-3xl font-bold underline">Hello world!</h1>
+  <GroupSetting :groupId="groupId"></GroupSetting>
 </template>
