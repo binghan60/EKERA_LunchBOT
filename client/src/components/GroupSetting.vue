@@ -67,7 +67,7 @@
         <div class="bg-white p-6 rounded-xl shadow-md border border-amber-200">
           <h4 class="text-lg font-semibold text-amber-800 mb-4">所有餐廳清單</h4>
           <div class="max-h-96 overflow-y-auto space-y-3">
-            <div v-for="r in restaurants" :key="r._id" draggable="true" @dragstart="startDrag(r)" @dragend="endDrag" class="p-4 bg-amber-50 border border-amber-300 rounded-lg cursor-move hover:bg-amber-100 transition-colors duration-200" :class="{ 'opacity-50': isDragging && draggedRestaurant?._id === r._id }">
+            <div v-for="r in restaurants" :key="r._id" draggable="true" @dragstart="startDrag(r)" @dragend="endDrag" class="p-2 bg-amber-50 border border-amber-300 rounded-lg cursor-move hover:bg-amber-100 transition-colors duration-200" :class="{ 'opacity-50': isDragging && draggedRestaurant?._id === r._id }">
               <div class="flex items-center justify-between">
                 <div class="flex-1">
                   <div class="font-medium text-amber-900">{{ r.name }}</div>
