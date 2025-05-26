@@ -45,8 +45,8 @@
             <span v-if="form.menuFile">已選擇檔案：{{ form.menuFile.name }}</span>
             <span v-else>點我上傳菜單圖片</span>
           </label>
-          <input id="menu-upload" type="file" accept="image/*" @change="handleFileChange" class="sr-only" ref="menuFileInput" />
-          <p class="text-xs text-amber-600 mt-1 ml-1">支援圖片格式，建議上傳清晰的菜單圖。</p>
+          <input id="menu-upload" type="file" accept=".png, .jpg, .jpeg" @change="handleFileChange" class="sr-only" ref="menuFileInput" />
+          <p class="text-xs text-amber-600 mt-1 ml-1">支援圖片jpg/png格式，建議上傳清晰的菜單圖。</p>
         </div>
 
         <div v-if="menuPreview" class="col-span-2 flex flex-col items-center">
@@ -145,7 +145,7 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button @click="toggleOfficeRestaurant(binding)" :class="binding.isActiveInOffice ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'" class="px-2 py-1 rounded text-xs">
+                  <button @click="toggleOfficeRestaurant(binding)" :class="binding.isActiveInOffice ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'" class="px-2 py-1 rounded text-xs cursor-pointer">
                     {{ binding.isActiveInOffice ? '啟用' : '停用' }}
                   </button>
                   <button @click="removeOfficeRestaurant(binding._id)" class="text-red-600 hover:text-red-800 text-sm">移除</button>
