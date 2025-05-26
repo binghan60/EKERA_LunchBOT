@@ -6,9 +6,9 @@ const randomRestaurantRoutes = require('./randomRestaurantRouter.js');
 const groupRestaurantRoutes = require('./groupRestaurantRouter.js');
 const router = express.Router();
 router.use(express.json());
-router.use('/group-settings', groupSettingRoutes);
+router.use('/group-setting', groupSettingRoutes);
 router.use('/restaurant', restaurantRoutes);
 router.use('/random-restaurant', randomRestaurantRoutes);
-router.use('/group-restaurants', groupRestaurantRoutes);
+router.use('/group-restaurant', groupRestaurantRoutes);
 
 module.exports = router;
