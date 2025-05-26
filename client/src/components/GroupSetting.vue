@@ -1,6 +1,6 @@
 <template>
   <div class="p-6">
-    <h2 class="text-3xl font-bold text-amber-800 mb-4 text-center">群組設定面板</h2>
+    <h2 class="text-3xl font-bold text-amber-900 mb-4 text-center">午餐醬後台</h2>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="bg-white p-6 rounded-xl shadow-md border border-amber-200 flex flex-col justify-between items-start">
@@ -29,11 +29,11 @@
   </div>
 
   <div class="p-6">
-    <h2 class="text-2xl font-bold text-amber-700 mb-4">餐廳設定面板</h2>
+    <h2 class="text-2xl font-bold text-amber-800 mb-4">餐廳設定面板</h2>
 
     <div class="mb-4 p-6 bg-white rounded-xl shadow-md border border-amber-200">
       <form @submit.prevent="createRestaurant" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <input v-model="form.name" type="text" placeholder="餐廳名稱" required class="border p-2 rounded-lg text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
+        <input v-model="form.name" type="text" placeholder="餐廳名稱(必填欄位)" required class="border p-2 rounded-lg text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
         <input v-model="form.phone" type="text" placeholder="電話" class="border p-2 rounded-lg text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
         <input v-model="form.address" type="text" placeholder="地址" class="border p-2 rounded-lg col-span-2 text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
 
@@ -43,7 +43,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
             </svg>
             <span v-if="form.menuFile">已選擇檔案：{{ form.menuFile.name }}</span>
-            <span v-else>點擊或拖曳上傳菜單圖片</span>
+            <span v-else>點我上傳菜單圖片</span>
           </label>
           <input id="menu-upload" type="file" accept="image/*" @change="handleFileChange" class="sr-only" ref="menuFileInput" />
           <p class="text-xs text-amber-600 mt-1 ml-1">支援圖片格式，建議上傳清晰的菜單圖。</p>
@@ -65,7 +65,7 @@
 
       <div class="grid grid-cols-1 gap-6">
         <div class="bg-white p-6 rounded-xl shadow-md border border-amber-200">
-          <h4 class="text-lg font-semibold text-amber-700 mb-4">所有餐廳清單</h4>
+          <h4 class="text-lg font-semibold text-amber-800 mb-4">所有餐廳清單</h4>
           <div class="max-h-96 overflow-y-auto space-y-3">
             <div v-for="r in restaurants" :key="r._id" draggable="true" @dragstart="startDrag(r)" @dragend="endDrag" class="p-4 bg-amber-50 border border-amber-300 rounded-lg cursor-move hover:bg-amber-100 transition-colors duration-200" :class="{ 'opacity-50': isDragging && draggedRestaurant?._id === r._id }">
               <div class="flex items-center justify-between">
@@ -91,7 +91,7 @@
                 </div>
               </div>
             </div>
-            <div v-if="restaurants.length === 0" class="text-gray-500 text-center py-8">尚無餐廳資料</div>
+            <div v-if="restaurants.length === 0" class="text-amber-800 text-center py-8">尚無餐廳資料</div>
           </div>
         </div>
       </div>
@@ -134,10 +134,14 @@
               <div v-for="binding in getOfficeRestaurants(office)" :key="binding._id" class="flex items-center justify-between bg-amber-50 p-2 rounded-lg border border-amber-200">
                 <div class="flex-1">
                   <div class="font-medium text-sm text-amber-900">
-                    {{ getRestaurantName(binding.restaurantId) }}
+                    {{ binding.restaurantId?.name || '未知餐廳' }}
                   </div>
                   <div class="text-xs text-amber-700">
-                    {{ getRestaurantPhone(binding.restaurantId) }}
+                    <i class="fa-solid fa-location-dot fa-fw"></i>
+                    {{ binding.restaurantId?.address || '未設定地址' }}
+                    <span class="mx-2">|</span>
+                    <i class="fa-solid fa-phone fa-fw"></i>
+                    {{ binding.restaurantId?.phone || '未設定電話' }}
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -369,7 +373,6 @@ function getOfficeRestaurants(office) {
 
 // 開始拖拉
 function startDrag(restaurant) {
-  console.log({ restaurant });
   isDragging.value = true;
   draggedRestaurant.value = restaurant;
 }
@@ -455,15 +458,6 @@ async function removeOfficeRestaurant(bindingId) {
   } catch (err) {
     toast.error('移除失敗');
   }
-}
-
-function getRestaurantName(restaurant) {
-  return restaurant ? restaurant.name : '未知餐廳';
-}
-
-function getRestaurantPhone(id) {
-  const restaurant = restaurants.value.find((r) => r._id === id);
-  return restaurant ? restaurant.phone : '無電話';
 }
 
 // -------------------- 初始化 --------------------
