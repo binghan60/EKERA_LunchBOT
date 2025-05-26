@@ -114,7 +114,7 @@
                   groupSetting.currentOffice = office;
                   saveSetting();
                 "
-                class="ml-3 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg shadow-md transition duration-200"
+                class="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition duration-200"
               >
                 設為預設
               </button>
@@ -132,6 +132,11 @@
 
             <div v-else class="space-y-2">
               <div v-for="binding in getOfficeRestaurants(office)" :key="binding._id" class="flex items-center justify-between bg-amber-50 p-2 rounded-lg border border-amber-200">
+                <div>
+                  <button @click="toggleOfficeRestaurant(binding)" :class="binding.isActiveInOffice ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'" class="px-2 py-1 mx-1 rounded text-xs cursor-pointer">
+                    {{ binding.isActiveInOffice ? '啟用' : '停用' }}
+                  </button>
+                </div>
                 <div class="flex-1">
                   <div class="font-medium text-sm text-amber-900">
                     {{ binding.restaurantId?.name || '未知餐廳' }}
@@ -145,9 +150,6 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button @click="toggleOfficeRestaurant(binding)" :class="binding.isActiveInOffice ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'" class="px-2 py-1 rounded text-xs cursor-pointer">
-                    {{ binding.isActiveInOffice ? '啟用' : '停用' }}
-                  </button>
                   <button @click="removeOfficeRestaurant(binding._id)" class="text-red-600 hover:text-red-800 text-sm">移除</button>
                 </div>
               </div>
@@ -155,7 +157,7 @@
           </div>
         </div>
 
-        <div v-if="groupSetting.officeOption.length === 0" class="text-center text-gray-500 py-8">目前沒有辦公室，請新增。</div>
+        <div v-if="groupSetting.officeOption.length === 0" class="text-center text-gray-500 py-8">目前沒有辦公室，請先新增辦公室。</div>
       </div>
     </div>
 
@@ -203,6 +205,7 @@ const newOffice = ref('');
 // ✅ 餐廳表單與清單
 const restaurants = ref([]);
 const form = ref({ name: '', phone: '', address: '', tags: '' });
+// ✅ 上傳圖片處理
 const menuFile = ref(null);
 const menuPreview = ref(null);
 const handleFileChange = (e) => {
@@ -381,16 +384,13 @@ function startDrag(restaurant) {
 // 結束拖拉
 function endDrag() {
   isDragging.value = false;
-  // draggedRestaurant.value = null
   dragOverOffice.value = null;
 }
 
 // 放下餐廳到辦公室
 async function dropRestaurant(office) {
   if (!draggedRestaurant.value) return;
-
   dragOverOffice.value = null;
-
   try {
     // 檢查是否已經綁定
     const existing = officeRestaurants.value.find((binding) => binding.office === office && binding.restaurantId._id === draggedRestaurant.value._id);
