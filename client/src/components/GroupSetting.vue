@@ -362,6 +362,7 @@ async function deleteRestaurant(id) {
   try {
     await axios.delete(`${API_PATH}/restaurant/${id}`, { data: { groupId } });
     restaurants.value = restaurants.value.filter((r) => r._id !== id);
+    await fetchOfficeRestaurants();
     toast.success('刪除成功');
   } catch (err) {
     toast.error(err.data?.message || '刪除失敗');
@@ -455,6 +456,8 @@ async function removeOfficeRestaurant(bindingId) {
 
     // 從清單中移除
     officeRestaurants.value = officeRestaurants.value.filter((binding) => binding._id !== bindingId);
+    await fetchOfficeRestaurants();
+
     toast.success('已移除綁定');
   } catch (err) {
     toast.error('移除失敗');
