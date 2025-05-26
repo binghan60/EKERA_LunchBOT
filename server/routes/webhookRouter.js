@@ -54,7 +54,7 @@ async function handleEvent(event, client) {
         currentOffice: 'default',
         officeOption: ['default'],
       };
-      const response = await axios.post(`${apiPath}/api/group-settings`, payload);
+      const response = await axios.post(`${apiPath}/api/group-setting`, payload);
       console.log({ response });
     } catch (error) {
       console.log(error);
