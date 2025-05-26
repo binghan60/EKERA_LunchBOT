@@ -335,6 +335,7 @@ const createRestaurant = async () => {
     await fetchRestaurants();
     form.value = { name: '', phone: '', address: '', tags: [] };
     menuFile.value = null;
+    menuPreview.value = null;
   } catch (err) {
     console.log(err);
     toast.error('新增失敗');
