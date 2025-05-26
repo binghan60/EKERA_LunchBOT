@@ -40,7 +40,7 @@ async function handleEvent(event, client) {
     if (msg === '/h') {
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: '回傳控制面板網址',
+        text: `https://ekera-lunch-bot-client.vercel.app/?groupId=${groupId}`,
       });
     }
   }
