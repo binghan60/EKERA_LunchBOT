@@ -41,13 +41,12 @@ async function handleEvent(event, client) {
     if (msg === '/h') {
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: `嗨嗨～這是你的群組後台網址！\n用來設定餐廳、開關啟用狀態、備註等等～\n👉 https://ekera-lunch-bot-client.vercel.app/?groupId=${groupId}`,
+        text: `嗨嗨～這是你的群組後台網址！\n用來設定推播通知、餐廳資料、開關啟用狀態等等～\n👉 https://ekera-lunch-bot-client.vercel.app/?groupId=${groupId}`,
       });
     }
   }
   if (event.type === 'join') {
     try {
-      console.log("join")
       const payload = {
         groupId,
         lunchNotification: false,
@@ -55,7 +54,6 @@ async function handleEvent(event, client) {
         officeOption: ['default'],
       };
       const response = await axios.post(`${apiPath}/api/group-setting`, payload);
-      console.log({ response });
     } catch (error) {
       console.log(error);
     }
