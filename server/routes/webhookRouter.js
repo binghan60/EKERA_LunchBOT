@@ -47,6 +47,7 @@ async function handleEvent(event, client) {
   }
   if (event.type === 'join') {
     try {
+      console.log("join")
       const payload = {
         groupId,
         lunchNotification: false,
@@ -54,7 +55,7 @@ async function handleEvent(event, client) {
         officeOption: ['default'],
       };
       const response = await axios.post(`${apiPath}/api/group-settings`, payload);
-      console.log(response);
+      console.log({ response });
     } catch (error) {
       console.log(error);
     }

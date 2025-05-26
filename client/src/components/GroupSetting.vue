@@ -234,11 +234,7 @@ async function fetchGroupSetting() {
     groupSetting.currentOffice = data.currentOffice;
     groupSetting.officeOption = data.officeOption;
   } catch {
-    toast.warning('找不到群組設定，使用預設資料');
-    groupSetting.lunchNotification = true;
-    groupSetting.currentOffice = 'Taipei';
-    groupSetting.officeOption = ['Taipei', 'Tainan', 'Kaohsiung'];
-    await saveSetting();
+    toast.warning('找不到群組設定');
   } finally {
     isLoading.value = false;
   }
