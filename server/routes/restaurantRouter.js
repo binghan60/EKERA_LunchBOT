@@ -54,7 +54,7 @@ router.post('/', upload.array('menu', 5), async (req, res) => {
 
     for (const file of req.files) {
       const result = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream({ folder: `EKERA_lunch_BOT/${groupId}` }, (error, result) => {
+        const stream = cloudinary.uploader.upload_stream({ folder: `EKERA_Lunch_BOT/${groupId}` }, (error, result) => {
           if (error) reject(error);
           else resolve(result);
         });
