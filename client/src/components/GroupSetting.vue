@@ -37,142 +37,352 @@
         <input v-model="form.phone" type="text" placeholder="電話" class="border p-2 rounded-lg text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
         <input v-model="form.address" type="text" placeholder="地址" class="border p-2 rounded-lg col-span-2 text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
 
+        <!-- 檔案上傳區域 -->
         <div class="col-span-2">
           <label for="menu-upload" class="flex items-center justify-center px-4 py-2 bg-amber-100 text-amber-700 border border-amber-300 rounded-lg cursor-pointer hover:bg-amber-200 transition duration-200">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
             </svg>
-            <span v-if="form.menuFile">已選擇檔案：{{ form.menuFile.name }}</span>
-            <span v-else>點我上傳菜單圖片</span>
+            <span v-if="menuFiles.length > 0">已選擇 {{ menuFiles.length }} 張圖片</span>
+            <span v-else>點我上傳菜單圖片（可多選5張）</span>
           </label>
-          <input id="menu-upload" type="file" accept=".png, .jpg, .jpeg" @change="handleFileChange" class="sr-only" ref="menuFileInput" />
-          <p class="text-xs text-amber-600 mt-1 ml-1">支援圖片jpg/png格式，建議上傳清晰的菜單圖。</p>
+          <input id="menu-upload" type="file" accept=".png, .jpg, .jpeg" multiple @change="handleFileChange" class="sr-only" ref="menuFileInput" />
+          <div class="flex justify-between items-center mt-1">
+            <p class="text-xs text-amber-600 ml-1">支援圖片jpg/png格式，最多上傳5張，每張最大2MB</p>
+            <button v-if="menuFiles.length > 0" @click="removeAllMenuImages" type="button" class="text-xs text-red-500 hover:text-red-700 underline">清空所有圖片</button>
+          </div>
         </div>
 
-        <div v-if="menuPreview" class="col-span-2 flex flex-col items-center">
-          <p class="text-sm text-amber-700 mb-2">菜單預覽：</p>
-          <img :src="menuPreview" alt="菜單預覽" class="max-w-md border border-amber-300 rounded shadow mb-3" />
-          <button @click="removeMenuImage" type="button" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 text-sm cursor-pointer">移除圖片</button>
+        <!-- 圖片預覽區域 -->
+        <div v-if="menuPreviews.length > 0" class="col-span-2">
+          <p class="text-sm text-amber-700 mb-3">菜單預覽（{{ menuPreviews.length }}/5）：</p>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div v-for="(preview, index) in menuPreviews" :key="index" class="relative border border-amber-300 rounded-lg overflow-hidden shadow-sm">
+              <img :src="preview.src" :alt="`菜單預覽 ${index + 1}`" class="w-full h-48 object-cover" />
+              <div class="absolute top-2 right-2">
+                <button @click="removeMenuImage(index)" type="button" class="bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition duration-200 shadow-lg" title="移除圖片">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-2">
+                <p class="text-xs truncate" :title="preview.name">{{ preview.name }}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <button type="submit" class="col-span-2 bg-amber-600 text-white py-2 rounded-lg hover:bg-amber-700">新增餐廳</button>
+        <button type="submit" :disabled="isLoading" class="col-span-2 bg-amber-600 text-white py-2 rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200">
+          {{ isLoading ? '新增中...' : '新增餐廳' }}
+        </button>
       </form>
     </div>
   </div>
-  <div class="p-6">
+  <div>
+    <!-- 餐廳清單區域 -->
     <div class="mb-8">
       <h3 class="text-2xl font-semibold text-amber-800 mb-6">餐廳綁定管理</h3>
 
       <div class="grid grid-cols-1 gap-6">
         <div class="bg-white p-6 rounded-xl shadow-md border border-amber-200">
-          <h4 class="text-lg font-semibold text-amber-800 mb-4">所有餐廳清單</h4>
-          <div class="max-h-96 overflow-y-auto space-y-3">
-            <div v-for="r in restaurants" :key="r._id" draggable="true" @dragstart="startDrag(r)" @dragend="endDrag" class="p-2 bg-amber-50 border border-amber-300 rounded-lg cursor-move hover:bg-amber-100 transition-colors duration-200" :class="{ 'opacity-50': isDragging && draggedRestaurant?._id === r._id }">
-              <div class="flex items-center justify-between">
-                <div class="flex-1">
-                  <div class="font-medium text-amber-900">{{ r.name }}</div>
-                  <div class="text-sm text-amber-700">{{ r.phone || '無電話' }}｜{{ r.address || '無地址' }}</div>
-                </div>
-                <div>
-                  <img v-if="r.menu[0]" :src="r.menu[0]" alt="菜單預覽" class="max-h-24 rounded border border-amber-300 shadow" />
-                  <p class="text-sm text-amber-700" v-else>無上傳菜單</p>
-                </div>
-                <div class="flex items-center gap-2 ml-2">
-                  <div class="text-amber-400">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
-                    </svg>
+          <!-- 標題列和切換按鈕 -->
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-lg font-semibold text-amber-800">所有餐廳清單</h4>
+
+            <!-- 顯示模式切換按鈕 -->
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-amber-700">顯示模式：</span>
+              <div class="flex bg-amber-100 rounded-lg p-1">
+                <button @click="viewMode = 'single'" :class="['px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2', viewMode === 'single' ? 'bg-amber-600 text-white shadow-sm' : 'text-amber-700 hover:bg-amber-200']">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                  </svg>
+                </button>
+                <button @click="viewMode = 'double'" :class="['px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 flex items-center gap-2', viewMode === 'double' ? 'bg-amber-600 text-white shadow-sm' : 'text-amber-700 hover:bg-amber-200']">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h7M4 12h7M4 18h7M15 6h5M15 12h5M15 18h5"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 餐廳列表容器 -->
+          <div class="max-h-96 overflow-y-auto">
+            <!-- 單列模式 -->
+            <div v-if="viewMode === 'single'" class="space-y-3">
+              <div v-for="r in restaurants" :key="r._id" draggable="true" @dragstart="startDrag(r)" @dragend="endDrag" class="p-3 bg-amber-50 border border-amber-300 rounded-lg cursor-move hover:bg-amber-100 transition-colors duration-200" :class="{ 'opacity-50': isDragging && draggedRestaurant?._id === r._id }">
+                <div class="flex items-center justify-between gap-3">
+                  <!-- 餐廳基本資訊 -->
+                  <div class="flex-1 min-w-0">
+                    <div class="text-amber-900 mb-1 font-bold">{{ r.name }}</div>
+                    <div class="text-sm text-amber-700 mb-2">
+                      <div v-if="r.phone" class="mb-1">
+                        <i class="fa-solid fa-phone fa-fw"></i>
+                        {{ r.phone }}
+                      </div>
+                      <div v-if="r.address">
+                        <i class="fa-solid fa-location-dot fa-fw"></i>
+                        {{ r.address }}
+                      </div>
+                    </div>
                   </div>
-                  <button @click="deleteRestaurant(r._id)" class="w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 shadow-sm cursor-pointer" aria-label="刪除餐廳">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
+
+                  <!-- 菜單圖片區域 -->
+                  <div class="flex-shrink-0">
+                    <div v-if="r.menu && r.menu.length > 0" class="relative">
+                      <div class="relative group">
+                        <img :src="r.menu[0]" alt="菜單預覽" class="w-20 h-20 object-cover rounded border border-amber-300 shadow cursor-pointer" @click="openImageModal(r)" />
+                        <div v-if="r.menu.length > 1" class="absolute -top-2 -right-2 bg-amber-600 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-medium shadow-md">
+                          {{ r.menu.length }}
+                        </div>
+                      </div>
+                    </div>
+                    <div v-else class="w-20 h-20 bg-amber-100 rounded border border-amber-300 flex items-center justify-center">
+                      <span class="text-xs text-amber-600 text-center">無菜單圖片</span>
+                    </div>
+                  </div>
+
+                  <!-- 操作按鈕 -->
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <div class="text-amber-400">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
+                      </svg>
+                    </div>
+                    <button @click="deleteRestaurant(r._id)" class="w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 shadow-sm cursor-pointer" aria-label="刪除餐廳">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <!-- 雙列模式 -->
+            <div v-else-if="viewMode === 'double'" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div v-for="r in restaurants" :key="r._id" draggable="true" @dragstart="startDrag(r)" @dragend="endDrag" class="p-3 bg-amber-50 border border-amber-300 rounded-lg cursor-move hover:bg-amber-100 transition-colors duration-200" :class="{ 'opacity-50': isDragging && draggedRestaurant?._id === r._id }">
+                <!-- 緊湊版布局 -->
+                <div class="space-y-3">
+                  <!-- 餐廳名稱和操作按鈕 -->
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="text-amber-900 font-bold text-sm leading-tight flex-1">{{ r.name }}</div>
+                    <div class="flex items-center gap-1 flex-shrink-0">
+                      <div class="text-amber-400">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
+                        </svg>
+                      </div>
+                      <button @click="deleteRestaurant(r._id)" class="w-6 h-6 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 shadow-sm cursor-pointer" aria-label="刪除餐廳">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 圖片和資訊 -->
+                  <div class="flex items-start gap-3">
+                    <!-- 菜單圖片 -->
+                    <div class="flex-shrink-0">
+                      <div v-if="r.menu && r.menu.length > 0" class="relative">
+                        <div class="relative group">
+                          <img :src="r.menu[0]" alt="菜單預覽" class="w-16 h-16 object-cover rounded border border-amber-300 shadow cursor-pointer" @click="openImageModal(r)" />
+                          <div v-if="r.menu.length > 1" class="absolute -top-1 -right-1 bg-amber-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium shadow-md">
+                            {{ r.menu.length }}
+                          </div>
+                        </div>
+                      </div>
+                      <div v-else class="w-16 h-16 bg-amber-100 rounded border border-amber-300 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                      </div>
+                    </div>
+
+                    <!-- 聯絡資訊 -->
+                    <div class="flex-1 min-w-0">
+                      <div class="text-xs text-amber-700 space-y-1">
+                        <div v-if="r.phone" class="truncate">
+                          <i class="fa-solid fa-phone fa-fw"></i>
+                          {{ r.phone }}
+                        </div>
+                        <div v-if="r.address" class="line-clamp-2">
+                          <i class="fa-solid fa-location-dot fa-fw"></i>
+                          {{ r.address }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 無資料提示 -->
             <div v-if="restaurants.length === 0" class="text-amber-800 text-center py-8">尚無餐廳資料</div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- 辦公室清單區域 -->
     <div class="mb-8 p-6 bg-white rounded-xl shadow-md border border-amber-200">
-      <h3 class="text-xl font-semibold text-amber-800 mb-4">辦公室清單與綁定餐廳</h3>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-semibold text-amber-800">辦公室清單與綁定餐廳</h3>
+        <button @click="toggleAllOffices" class="px-3 py-1 bg-amber-500 text-white text-sm rounded hover:bg-amber-600 transition duration-200">
+          {{ allOfficesExpanded ? '全部收合' : '全部展開' }}
+        </button>
+      </div>
 
-      <div class="space-y-6">
-        <div v-for="office in groupSetting.officeOption" :key="office" class="border border-amber-300 rounded-lg">
-          <div class="flex items-center justify-between px-4 py-3 bg-amber-100 rounded-t-lg">
-            <div class="flex items-center">
-              <span class="mr-3 text-lg font-medium" :class="{ 'font-bold text-amber-800': office === groupSetting.currentOffice, 'text-amber-700': office !== groupSetting.currentOffice }">
+      <div class="space-y-4">
+        <div v-for="office in groupSetting.officeOption" :key="office" class="border border-amber-300 rounded-lg overflow-hidden">
+          <!-- 辦公室標題列 -->
+          <div class="flex items-center justify-between px-4 py-3 bg-amber-100 cursor-pointer hover:bg-amber-150 transition-colors duration-200" @click="toggleOffice(office)">
+            <div class="flex items-center flex-1">
+              <!-- 展開/收合圖示 -->
+              <div class="mr-3 text-amber-600 transition-transform duration-200" :class="{ 'rotate-90': expandedOffices[office] }">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </div>
+
+              <span class="text-lg font-medium" :class="{ 'font-bold text-amber-800': office === groupSetting.currentOffice, 'text-amber-700': office !== groupSetting.currentOffice }">
                 {{ office }}
               </span>
-              <span v-if="office === groupSetting.currentOffice" class="px-2 py-0.5 bg-amber-600 text-white text-xs font-semibold rounded-full shadow-sm">目前使用</span>
+
+              <!-- 綁定餐廳數量標示 -->
+              <span class="ml-3 px-2 py-0.5 bg-amber-600 text-white text-xs rounded-full">{{ getOfficeRestaurants(office).length }} 家餐廳</span>
+
+              <span v-if="office === groupSetting.currentOffice" class="ml-2 px-2 py-0.5 bg-green-600 text-white text-xs font-semibold rounded-full shadow-sm">目前使用</span>
+            </div>
+
+            <div class="flex items-center gap-2" @click.stop>
               <button
-                v-else
+                v-if="office !== groupSetting.currentOffice"
                 @click="
                   groupSetting.currentOffice = office;
                   saveSetting();
                 "
-                class="px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition duration-200"
+                class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition duration-200"
               >
                 設為預設
               </button>
-            </div>
-            <div class="flex items-center gap-2">
-              <button @click="removeOffice(office)" v-if="office !== groupSetting.currentOffice" class="text-sm text-red-600 hover:text-red-800 font-medium transition duration-200">刪除</button>
+              <button @click="removeOffice(office)" v-if="office !== groupSetting.currentOffice" class="bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600 rounded-lg font-medium transition duration-200">刪除辦公室</button>
             </div>
           </div>
-
-          <div class="p-4 min-h-24" :class="{ 'border-amber-600 bg-amber-50 ring-2 ring-amber-300': dragOverOffice === office, 'bg-white': dragOverOffice !== office }" @dragover.prevent="dragOverOffice = office" @dragleave="dragOverOffice = null" @drop="dropRestaurant(office)">
-            <div v-if="getOfficeRestaurants(office).length === 0" class="text-center text-gray-400 py-4">
-              <div class="text-sm text-amber-700">拖拉餐廳到這裡進行綁定</div>
-              <div class="text-xs mt-1 text-amber-700">支援拖拉所有餐廳清單</div>
-            </div>
-
-            <div v-else class="space-y-2">
-              <div v-for="binding in getOfficeRestaurants(office)" :key="binding._id" class="flex items-center justify-between bg-amber-50 p-2 rounded-lg border border-amber-200">
-                <div>
-                  <button @click="toggleOfficeRestaurant(binding)" :class="binding.isActiveInOffice ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'" class="px-2 py-1 mx-1 rounded text-xs cursor-pointer">
-                    {{ binding.isActiveInOffice ? '啟用' : '停用' }}
-                  </button>
+          <!-- 辦公室內容區域（可收合） -->
+          <div v-show="expandedOffices[office]" class="transition-all duration-300 ease-in-out">
+            <div
+              class="p-4 min-h-24"
+              :class="{
+                'border-amber-600 bg-amber-50 ring-2 ring-amber-300': dragOverOffice === office,
+                'bg-white': dragOverOffice !== office,
+              }"
+              @dragover.prevent="dragOverOffice = office"
+              @dragleave="dragOverOffice = null"
+              @drop="dropRestaurant(office)"
+            >
+              <div v-if="getOfficeRestaurants(office).length === 0" class="text-center text-gray-400 py-8">
+                <div class="mb-2">
+                  <svg class="w-12 h-12 mx-auto text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                  </svg>
                 </div>
-                <div class="flex-1">
-                  <div class="font-medium text-sm text-amber-900">
-                    {{ binding.restaurantId?.name || '未知餐廳' }}
+                <div class="text-sm text-amber-700 font-medium">拖拉餐廳到這裡進行綁定</div>
+                <div class="text-xs mt-1 text-amber-600">支援從上方餐廳清單拖拉</div>
+              </div>
+
+              <div v-else class="space-y-3">
+                <div v-for="binding in getOfficeRestaurants(office)" :key="binding._id" class="flex items-center gap-3 bg-amber-50 p-3 rounded-lg border border-amber-200 hover:bg-amber-100 transition-colors duration-200">
+                  <!-- 啟用/停用按鈕 -->
+                  <div class="flex-shrink-0">
+                    <button @click="toggleOfficeRestaurant(binding)" :class="binding.isActiveInOffice ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'" class="px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors duration-200">
+                      {{ binding.isActiveInOffice ? '✓ 啟用' : '✗ 停用' }}
+                    </button>
                   </div>
-                  <div class="text-xs text-amber-700">
-                    <i class="fa-solid fa-location-dot fa-fw"></i>
-                    {{ binding.restaurantId?.address || '未設定地址' }}
-                    <span class="mx-2">|</span>
-                    <i class="fa-solid fa-phone fa-fw"></i>
-                    {{ binding.restaurantId?.phone || '未設定電話' }}
+
+                  <!-- 餐廳資訊 -->
+                  <div class="flex-1 min-w-0">
+                    <div class="font-medium text-sm text-amber-900 mb-1">
+                      {{ binding.restaurantId?.name || '未知餐廳' }}
+                    </div>
+                    <div class="text-xs text-amber-700 space-y-1">
+                      <div v-if="binding.restaurantId?.address">📍 {{ binding.restaurantId.address }}</div>
+                      <div v-if="binding.restaurantId?.phone">📞 {{ binding.restaurantId.phone }}</div>
+                    </div>
                   </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button @click="removeOfficeRestaurant(binding._id)" class="text-red-600 hover:text-red-800 text-sm">移除</button>
+
+                  <!-- 菜單圖片預覽 -->
+                  <div class="flex-shrink-0" v-if="binding.restaurantId?.menu?.length > 0">
+                    <div class="relative">
+                      <img :src="binding.restaurantId.menu[0]" alt="菜單預覽" class="w-12 h-12 object-cover rounded border border-amber-300 cursor-pointer hover:scale-105 transition-transform duration-200" @click="openImageModal(binding.restaurantId)" />
+                      <div v-if="binding.restaurantId.menu.length > 1" class="absolute -top-1 -right-1 bg-amber-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-medium">
+                        {{ binding.restaurantId.menu.length }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 移除按鈕 -->
+                  <div class="flex-shrink-0">
+                    <button @click="removeOfficeRestaurant(binding._id)" class="w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 shadow-sm cursor-pointer" title="移除餐廳綁定">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="groupSetting.officeOption.length === 0" class="text-center text-gray-500 py-8">目前沒有辦公室，請先新增辦公室。</div>
+        <div v-if="groupSetting.officeOption.length === 0" class="text-center text-gray-500 py-12">
+          <div class="mb-4">
+            <svg class="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+          </div>
+          <div class="font-medium text-gray-600">目前沒有辦公室</div>
+          <div class="text-sm text-gray-500">請先新增辦公室以便管理餐廳綁定</div>
+        </div>
       </div>
     </div>
 
-    <VueLoading :active="isLoading" :is-full-page="true" />
+    <!-- 圖片彈窗 Modal -->
+    <div v-if="imageModal.show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click="closeImageModal">
+      <div class="bg-white rounded-lg w-full max-w-[95vw] max-h-[95vh] overflow-hidden" @click.stop>
+        <div class="flex items-center justify-between p-6 border-b">
+          <h3 class="text-xl font-semibold text-amber-800">{{ imageModal.restaurant?.name }} - 菜單圖片</h3>
+          <button @click="closeImageModal" class="text-gray-500 hover:text-gray-700 p-1">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6 max-h-[calc(95vh-80px)] overflow-y-auto">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-for="(image, index) in imageModal.restaurant?.menu" :key="index" class="relative group">
+              <img :src="image" :alt="`${imageModal.restaurant?.name} 菜單 ${index + 1}`" class="w-full h-auto aspect-[3/2] object-cover rounded-lg border border-gray-200 shadow-sm" />
+              <div class="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-sm">{{ index + 1 }} / {{ imageModal.restaurant?.menu?.length }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
 import VueLoading from 'vue-loading-overlay';
 
 const toast = useToast();
-
+const viewMode = ref('single');
 // ✅ 接收 prop
 const props = defineProps({
   groupId: {
@@ -205,24 +415,64 @@ const newOffice = ref('');
 // ✅ 餐廳表單與清單
 const restaurants = ref([]);
 const form = ref({ name: '', phone: '', address: '', tags: '' });
-// ✅ 上傳圖片處理
-const menuFile = ref(null);
-const menuPreview = ref(null);
-const handleFileChange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
 
-  menuFile.value = file;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    menuPreview.value = e.target.result;
-  };
-  reader.readAsDataURL(file);
+// ✅ 多張圖片上傳處理
+const menuFiles = ref([]); // 改為陣列存儲多個檔案
+const menuPreviews = ref([]); // 改為陣列存儲多個預覽
+
+const handleFileChange = (e) => {
+  const files = Array.from(e.target.files); // 轉換為陣列
+
+  // 檢查檔案數量限制（最多5張）
+  if (menuFiles.value.length + files.length > 5) {
+    toast.error('最多只能上傳5張圖片');
+    return;
+  }
+
+  files.forEach((file) => {
+    // 檢查檔案類型
+    if (!file.type.startsWith('image/')) {
+      toast.error(`${file.name} 不是有效的圖片檔案`);
+      return;
+    }
+
+    // 檢查檔案大小（例如：限制5MB）
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error(`${file.name} 檔案過大，請選擇小於2MB的圖片`);
+      return;
+    }
+
+    menuFiles.value.push(file);
+
+    // 產生預覽
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      menuPreviews.value.push({
+        src: e.target.result,
+        name: file.name,
+        index: menuFiles.value.length - 1,
+      });
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // 清空 input，允許重複選擇相同檔案
+  e.target.value = '';
 };
 
-const removeMenuImage = () => {
-  menuFile.value = null;
-  menuPreview.value = null;
+const removeMenuImage = (index) => {
+  menuFiles.value.splice(index, 1);
+  menuPreviews.value.splice(index, 1);
+
+  // 重新索引預覽陣列
+  menuPreviews.value.forEach((preview, i) => {
+    preview.index = i;
+  });
+};
+
+const removeAllMenuImages = () => {
+  menuFiles.value = [];
+  menuPreviews.value = [];
 };
 
 // ✅ 新增：拖拉功能相關變數
@@ -327,18 +577,23 @@ const createRestaurant = async () => {
     formData.append('phone', form.value.phone || '');
     formData.append('address', form.value.address || '');
     formData.append('tags', JSON.stringify(form.value.tags || []));
-    if (menuFile.value) {
-      formData.append('menu', menuFile.value);
-    }
+
+    // 添加所有菜單圖片
+    menuFiles.value.forEach((file) => {
+      formData.append('menu', file);
+    });
+
     await axios.post(`${API_PATH}/restaurant`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
     toast.success('新增成功');
     await fetchRestaurants();
+
+    // 重置表單
     form.value = { name: '', phone: '', address: '', tags: [] };
-    menuFile.value = null;
-    menuPreview.value = null;
+    menuFiles.value = [];
+    menuPreviews.value = [];
   } catch (err) {
     console.log(err);
     toast.error('新增失敗');
@@ -471,4 +726,69 @@ onMounted(() => {
   fetchRestaurants();
   fetchOfficeRestaurants();
 });
+
+const expandedOffices = ref({});
+const allOfficesExpanded = computed(() => {
+  return Object.values(expandedOffices.value).every((expanded) => expanded);
+});
+
+// 圖片彈窗管理
+const imageModal = reactive({
+  show: false,
+  restaurant: null,
+});
+
+// 初始化辦公室展開狀態
+const initializeOfficeStates = () => {
+  groupSetting.officeOption.forEach((office) => {
+    if (!(office in expandedOffices.value)) {
+      if (groupSetting.currentOffice === office) {
+        expandedOffices.value[office] = true; // 預設展開
+      } else {
+        expandedOffices.value[office] = false; // 預設關閉
+      }
+    }
+  });
+};
+
+// 切換單個辦公室展開狀態
+const toggleOffice = (office) => {
+  expandedOffices.value[office] = !expandedOffices.value[office];
+};
+
+// 切換所有辦公室展開狀態
+const toggleAllOffices = () => {
+  const shouldExpand = !allOfficesExpanded.value;
+  groupSetting.officeOption.forEach((office) => {
+    expandedOffices.value[office] = shouldExpand;
+  });
+};
+
+// 打開圖片彈窗
+const openImageModal = (restaurant) => {
+  imageModal.restaurant = restaurant;
+  imageModal.show = true;
+  document.body.style.overflow = 'hidden'; // 防止背景滾動
+};
+
+// 關閉圖片彈窗
+const closeImageModal = () => {
+  imageModal.show = false;
+  imageModal.restaurant = null;
+  document.body.style.overflow = 'auto';
+};
+
+// 在組件掛載時初始化
+onMounted(() => {
+  initializeOfficeStates();
+});
+
+// 監聽辦公室選項變化
+watch(
+  () => groupSetting.officeOption,
+  () => {
+    initializeOfficeStates();
+  },
+  { deep: true },
+);
 </script>
