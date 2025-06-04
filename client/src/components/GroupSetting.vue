@@ -390,9 +390,11 @@
 import { reactive, ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
-
+// 初始化 Vue-toastification
 const toast = useToast();
+// 所有餐廳清單顯示模式
 const viewMode = ref('single');
+
 // ✅ 接收 prop
 const props = defineProps({
   groupId: {
