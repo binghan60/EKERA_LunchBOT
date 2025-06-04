@@ -1,17 +1,23 @@
-import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import './assets/main.css'
-import Loading from 'vue-loading-overlay'
-import 'vue-loading-overlay/dist/css/index.css'
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import './assets/main.css';
+import App from './App.vue';
+import router from './router';
+// vue loading overlay 設定
+import Loading from 'vue-loading-overlay';
+import 'vue-loading-overlay/dist/css/index.css';
+// vue toastification 設定
+import Toast from 'vue-toastification';
+import 'vue-toastification/dist/index.css';
 
-import Toast from 'vue-toastification'
-import 'vue-toastification/dist/index.css'
+const app = createApp(App);
 
-import App from './App.vue'
-import router from './router'
+app.use(createPinia());
 
-const app = createApp(App)
-
+app.use(router);
+// 全域註冊 VueLoading 元件
+app.component('VueLoading', Loading);
+// 全域註冊 Vue toastification 元件
 const toastOptions = {
   position: 'bottom-center',
   timeout: 1500,
@@ -21,11 +27,7 @@ const toastOptions = {
   showCloseButtonOnHover: false,
   hideProgressBar: false,
   icon: true,
-}
+};
+app.use(Toast, toastOptions);
 
-app.use(Toast, toastOptions)
-app.use(createPinia())
-app.use(router)
-app.component('VueLoading', Loading) // 全域註冊 VueLoading 元件
-
-app.mount('#app')
+app.mount('#app');

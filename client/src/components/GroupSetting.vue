@@ -383,6 +383,7 @@
       </div>
     </div>
   </div>
+  <VueLoading v-model:active="isLoading" :is-full-page="true" />
 </template>
 
 <script setup>
