@@ -79,7 +79,7 @@
       </form>
     </div>
   </div>
-  <div>
+  <div class="p-6">
     <!-- 餐廳清單區域 -->
     <div class="mb-8">
       <h3 class="text-2xl font-semibold text-amber-800 mb-6">餐廳綁定管理</h3>
@@ -118,13 +118,13 @@
                   <div class="flex-1 min-w-0">
                     <div class="text-amber-900 mb-1 font-bold">{{ r.name }}</div>
                     <div class="text-sm text-amber-700 mb-2">
-                      <div v-if="r.phone" class="mb-1">
-                        <i class="fa-solid fa-phone fa-fw"></i>
-                        {{ r.phone }}
-                      </div>
                       <div v-if="r.address">
                         <i class="fa-solid fa-location-dot fa-fw"></i>
                         {{ r.address }}
+                      </div>
+                      <div v-if="r.phone" class="mb-1">
+                        <i class="fa-solid fa-phone fa-fw"></i>
+                        {{ r.phone }}
                       </div>
                     </div>
                   </div>
@@ -205,13 +205,13 @@
                     <!-- 聯絡資訊 -->
                     <div class="flex-1 min-w-0">
                       <div class="text-xs text-amber-700 space-y-1">
-                        <div v-if="r.phone" class="truncate">
-                          <i class="fa-solid fa-phone fa-fw"></i>
-                          {{ r.phone }}
-                        </div>
                         <div v-if="r.address" class="line-clamp-2">
                           <i class="fa-solid fa-location-dot fa-fw"></i>
                           {{ r.address }}
+                        </div>
+                        <div v-if="r.phone" class="truncate">
+                          <i class="fa-solid fa-phone fa-fw"></i>
+                          {{ r.phone }}
                         </div>
                       </div>
                     </div>
@@ -258,18 +258,22 @@
               <span v-if="office === groupSetting.currentOffice" class="ml-2 px-2 py-0.5 bg-green-600 text-white text-xs font-semibold rounded-full shadow-sm">目前使用</span>
             </div>
 
-            <div class="flex items-center gap-2" @click.stop>
-              <button
-                v-if="office !== groupSetting.currentOffice"
-                @click="
-                  groupSetting.currentOffice = office;
-                  saveSetting();
-                "
-                class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition duration-200"
-              >
-                設為預設
-              </button>
-              <button @click="removeOffice(office)" v-if="office !== groupSetting.currentOffice" class="bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600 rounded-lg font-medium transition duration-200">刪除辦公室</button>
+            <div class="lg:flex items-center gap-2 space-y-2 lg:space-y-0" @click.stop>
+              <div>
+                <button
+                  v-if="office !== groupSetting.currentOffice"
+                  @click="
+                    groupSetting.currentOffice = office;
+                    saveSetting();
+                  "
+                  class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition duration-200"
+                >
+                  設為預設
+                </button>
+              </div>
+              <div>
+                <button @click="removeOffice(office)" v-if="office !== groupSetting.currentOffice" class="bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600 rounded-lg font-medium transition duration-200">刪除辦公室</button>
+              </div>
             </div>
           </div>
           <!-- 辦公室內容區域（可收合） -->
@@ -309,8 +313,14 @@
                       {{ binding.restaurantId?.name || '未知餐廳' }}
                     </div>
                     <div class="text-xs text-amber-700 space-y-1">
-                      <div v-if="binding.restaurantId?.address">📍 {{ binding.restaurantId.address }}</div>
-                      <div v-if="binding.restaurantId?.phone">📞 {{ binding.restaurantId.phone }}</div>
+                      <div v-if="binding.restaurantId?.address">
+                        <i class="fa-solid fa-location-dot fa-fw"></i>
+                        {{ binding.restaurantId.address }}
+                      </div>
+                      <div v-if="binding.restaurantId?.phone">
+                        <i class="fa-solid fa-phone fa-fw"></i>
+                        {{ binding.restaurantId.phone }}
+                      </div>
                     </div>
                   </div>
 
@@ -355,7 +365,7 @@
       <div class="bg-white rounded-lg w-full max-w-[95vw] max-h-[95vh] overflow-hidden" @click.stop>
         <div class="flex items-center justify-between p-6 border-b">
           <h3 class="text-xl font-semibold text-amber-800">{{ imageModal.restaurant?.name }} - 菜單圖片</h3>
-          <button @click="closeImageModal" class="text-gray-500 hover:text-gray-700 p-1">
+          <button @click="closeImageModal" class="text-gray-500 hover:text-gray-700 p-1 cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -379,7 +389,6 @@
 import { reactive, ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import { useToast } from 'vue-toastification';
-import VueLoading from 'vue-loading-overlay';
 
 const toast = useToast();
 const viewMode = ref('single');
@@ -546,10 +555,6 @@ function removeOffice(officeName) {
 
 // -------------------- 餐廳設定 --------------------
 
-function removeTag(index) {
-  form.value.tags.splice(index, 1);
-}
-
 async function fetchRestaurants() {
   if (!groupId) return;
   isLoading.value = true;
@@ -601,16 +606,6 @@ const createRestaurant = async () => {
     isLoading.value = false;
   }
 };
-
-async function toggleActive(r) {
-  try {
-    await axios.put(`${API_PATH}/restaurant/${r._id}`, { groupId, isActive: !r.isActive });
-    r.isActive = !r.isActive;
-    toast.success('狀態已更新');
-  } catch (err) {
-    toast.error(err.data?.message || '更新失敗');
-  }
-}
 
 async function deleteRestaurant(id) {
   if (!confirm('確定要刪除這間餐廳嗎？')) return;
@@ -698,6 +693,7 @@ async function toggleOfficeRestaurant(binding) {
     binding.isActiveInOffice = !binding.isActiveInOffice;
     toast.success('狀態已更新');
   } catch (err) {
+    console.error('切換辦公室餐廳狀態失敗:', err);
     toast.error('狀態更新失敗');
   }
 }
@@ -715,6 +711,7 @@ async function removeOfficeRestaurant(bindingId) {
 
     toast.success('已移除綁定');
   } catch (err) {
+    console.error('移除辦公室餐廳綁定失敗:', err);
     toast.error('移除失敗');
   }
 }
