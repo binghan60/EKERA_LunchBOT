@@ -177,210 +177,210 @@ const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
  */
 
 router.get('/', async (req, res) => {
-    try {
-        const notificationGroups = await GroupSetting.find({ lunchNotification: true }).select('groupId -_id');
-        res.status(200).json({ message: '成功獲取通知群組', data: notificationGroups });
-    } catch (error) {
-        console.error('Error fetching notification group:', error);
-        return res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
-    }
+  try {
+    const notificationGroups = await GroupSetting.find({ lunchNotification: true }).select('groupId -_id');
+    res.status(200).json({ message: '成功獲取通知群組', data: notificationGroups });
+  } catch (error) {
+    console.error('Error fetching notification group:', error);
+    return res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
+  }
 });
 
 router.post('/', async (req, res) => {
-    try {
-        const { groupId } = req.body;
+  try {
+    const { groupId } = req.body;
 
-        if (!groupId) {
-            return res.status(400).json({ message: '請求主體 (Request body) 中缺少 groupId' });
-        }
-
-        // 查詢群組設定
-        const groupSetting = await GroupSetting.findOne({ groupId });
-        if (!groupSetting) {
-            return res.status(400).json({ message: '這個群組還沒有設定地點，請先設定！' });
-        }
-
-        // 假設 GroupSetting 中儲存了對應的 LINE Group ID，欄位名稱為 groupId
-        const targetGroupId = groupSetting.groupId;
-        if (!targetGroupId) {
-            return res.status(400).json({ message: '無法確定要推播的 LINE 群組 ID，請檢查群組設定中的 groupId 欄位。' });
-        }
-
-        const currentOffice = groupSetting.currentOffice;
-
-        // 抽取餐廳
-        const restaurant = await drawRestaurant(groupId, currentOffice);
-
-        if (restaurant && restaurant.name) {
-            // 成功抽取到餐廳，發送 LINE 訊息
-            try {
-                const lineResponse = await sendLunchLineMessage(targetGroupId, restaurant);
-                // console.log('LINE push successful:', lineResponse.data); // 可以保留用於調試
-                return res.status(200).json({
-                    message: '餐廳已抽取並成功推播 LINE 訊息。',
-                    restaurantName: restaurant.name,
-                    linePushStatus: 'Success',
-                    linePushResponse: lineResponse.data,
-                });
-            } catch (lineError) {
-                console.error('LINE push failed:', lineError.response ? lineError.response.data : lineError.message);
-                return res.status(500).json({
-                    message: '成功抽取餐廳，但 LINE 推播失敗。',
-                    restaurantName: restaurant.name,
-                    linePushStatus: 'Failed',
-                    errorDetails: lineError.response ? lineError.response.data : { message: lineError.message }, // 確保 errorDetails 總是一個物件
-                });
-            }
-        } else {
-            return res.status(400).json({ message: '沒有可以抽的餐廳，請先新增幾家！' });
-        }
-    } catch (error) {
-        console.error('Server error caught in router:', error);
-        res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
+    if (!groupId) {
+      return res.status(400).json({ message: '請求主體 (Request body) 中缺少 groupId' });
     }
+
+    // 查詢群組設定
+    const groupSetting = await GroupSetting.findOne({ groupId });
+    if (!groupSetting) {
+      return res.status(400).json({ message: '這個群組還沒有設定地點，請先設定！' });
+    }
+
+    // 假設 GroupSetting 中儲存了對應的 LINE Group ID，欄位名稱為 groupId
+    const targetGroupId = groupSetting.groupId;
+    if (!targetGroupId) {
+      return res.status(400).json({ message: '無法確定要推播的 LINE 群組 ID，請檢查群組設定中的 groupId 欄位。' });
+    }
+
+    const currentOffice = groupSetting.currentOffice;
+
+    // 抽取餐廳
+    const restaurant = await drawRestaurant(groupId, currentOffice);
+    if (restaurant && restaurant.name) {
+      // 成功抽取到餐廳，發送 LINE 訊息
+      try {
+        const lineResponse = await sendLunchLineMessage(targetGroupId, restaurant);
+        // console.log('LINE push successful:', lineResponse.data); // 可以保留用於調試
+        return res.status(200).json({
+          message: '餐廳已抽取並成功推播 LINE 訊息。',
+          restaurantName: restaurant.name,
+          linePushStatus: 'Success',
+          linePushResponse: lineResponse.data,
+        });
+      } catch (lineError) {
+        console.error('LINE push failed:', lineError.response ? lineError.response.data : lineError.message);
+        return res.status(500).json({
+          message: '成功抽取餐廳，但 LINE 推播失敗。',
+          restaurantName: restaurant.name,
+          linePushStatus: 'Failed',
+          errorDetails: lineError.response ? lineError.response.data : { message: lineError.message }, // 確保 errorDetails 總是一個物件
+        });
+      }
+    } else {
+      const clientUrl = process.env.CLIENT_URL;
+      return res.status(400).json({ message: `沒有可以抽的餐廳，請先新增餐廳，並綁定至辦公室清單！\n👉 ${clientUrl}/?groupId=${groupId}` });
+    }
+  } catch (error) {
+    console.error('Server error caught in router:', error);
+    res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
+  }
 });
 
 async function drawRestaurant(groupId, office) {
-    const groupRestaurants = await GroupRestaurant.find({
-        groupId,
-        office,
-    }).select('restaurantId');
+  const groupRestaurants = await GroupRestaurant.find({
+    groupId,
+    office,
+  }).select('restaurantId');
 
-    if (groupRestaurants.length === 0) return null;
+  if (groupRestaurants.length === 0) return null;
 
-    const restaurantIds = groupRestaurants.map((gr) => new mongoose.Types.ObjectId(gr.restaurantId));
+  const restaurantIds = groupRestaurants.map((gr) => new mongoose.Types.ObjectId(gr.restaurantId));
 
-    const results = await Restaurant.aggregate([{ $match: { _id: { $in: restaurantIds }, isActive: true } }, { $sample: { size: 1 } }]);
+  const results = await Restaurant.aggregate([{ $match: { _id: { $in: restaurantIds }, isActive: true } }, { $sample: { size: 1 } }]);
 
-    if (results && results.length > 0) {
-        return results[0]; // 假設 results[0] 包含所有需要的欄位 (name, address, phone, etc.)
-    }
-    return null;
+  if (results && results.length > 0) {
+    return results[0]; // 假設 results[0] 包含所有需要的欄位 (name, address, phone, etc.)
+  }
+  return null;
 }
 
 async function sendLunchLineMessage(toGroupId, restaurant) {
-    if (!LINE_CHANNEL_ACCESS_TOKEN) {
-        console.error('LINE_CHANNEL_ACCESS_TOKEN is not defined. Please check environment variables.');
-        throw new Error('LINE Channel Access Token is missing.');
-    }
-    const restaurantName = restaurant.name || '今日神秘店家';
-    const displayAddress = restaurant?.address || '店家未提供地址';
-    const mapAddress = restaurant.address;
-    const restaurantPhone = restaurant?.phone || null;
-    const restaurantImage = restaurant?.menu?.[0] || 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg';
+  if (!LINE_CHANNEL_ACCESS_TOKEN) {
+    console.error('LINE_CHANNEL_ACCESS_TOKEN is not defined. Please check environment variables.');
+    throw new Error('LINE Channel Access Token is missing.');
+  }
+  const restaurantName = restaurant.name || '今日神秘店家';
+  const displayAddress = restaurant?.address || '未設定店家地址';
+  const mapAddress = restaurant.address;
+  const restaurantPhone = restaurant?.phone || '未設定店家電話';
+  const restaurantImage = restaurant?.menu?.[0] || 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg';
 
-    const footerButtons = [];
+  const footerButtons = [];
 
-    if (mapAddress && typeof mapAddress === 'string' && mapAddress.trim() !== '') {
-        footerButtons.push({
-            type: 'button',
-            style: 'link',
-            height: 'sm',
-            action: {
-                type: 'uri',
-                label: '地圖導航',
-                uri: `https://maps.google.com/?q=${encodeURIComponent(mapAddress)}`,
-            },
-        });
-    }
+  if (mapAddress && typeof mapAddress === 'string' && mapAddress.trim() !== '') {
+    footerButtons.push({
+      type: 'button',
+      style: 'link',
+      height: 'sm',
+      action: {
+        type: 'uri',
+        label: '地圖導航',
+        uri: `https://maps.google.com/?q=${encodeURIComponent(mapAddress)}`,
+      },
+    });
+  }
 
-    if (restaurantPhone && typeof restaurantPhone === 'string' && /^[0-9+()\-\s]+$/.test(restaurantPhone.trim())) {
-        const trimmedPhone = restaurantPhone.trim();
-        footerButtons.push({
-            type: 'button',
-            style: 'link',
-            height: 'sm',
-            action: {
-                type: 'uri',
-                label: '撥打電話',
-                uri: `tel:${trimmedPhone}`,
-            },
-        });
-    }
+  if (restaurantPhone && typeof restaurantPhone === 'string' && /^[0-9+()\-\s]+$/.test(restaurantPhone.trim())) {
+    const trimmedPhone = restaurantPhone.trim();
+    footerButtons.push({
+      type: 'button',
+      style: 'link',
+      height: 'sm',
+      action: {
+        type: 'uri',
+        label: '撥打電話',
+        uri: `tel:${trimmedPhone}`,
+      },
+    });
+  }
 
-    const flexContent = {
-        type: 'bubble',
-        hero: {
-            type: 'image',
-            url: restaurantImage,
-            size: 'full',
-            aspectRatio: '1:1',
-            aspectMode: 'cover',
-            action: {
-                type: 'uri',
-                uri: restaurantImage,
-            },
+  const flexContent = {
+    type: 'bubble',
+    hero: {
+      type: 'image',
+      url: restaurantImage,
+      size: 'full',
+      aspectRatio: '1:1',
+      aspectMode: 'cover',
+      action: {
+        type: 'uri',
+        uri: restaurantImage,
+      },
+    },
+    body: {
+      type: 'box',
+      layout: 'vertical',
+      spacing: 'md',
+      contents: [
+        {
+          type: 'text',
+          text: `🍱 今日推薦：\n${restaurantName}`,
+          wrap: true,
+          weight: 'bold',
+          size: 'lg',
         },
-        body: {
-            type: 'box',
-            layout: 'vertical',
-            spacing: 'md',
-            contents: [
-                {
-                    type: 'text',
-                    text: `🍱 今日推薦：\n${restaurantName}`,
-                    wrap: true,
-                    weight: 'bold',
-                    size: 'lg',
-                },
-                {
-                    type: 'box',
-                    layout: 'vertical',
-                    spacing: 'sm',
-                    contents: [
-                        {
-                            type: 'box',
-                            layout: 'baseline',
-                            spacing: 'sm',
-                            contents: [
-                                { type: 'text', text: '地址', color: '#3C3C3C', size: 'sm', flex: 1 },
-                                { type: 'text', text: displayAddress, wrap: true, color: '#666666', size: 'sm', flex: 5 },
-                            ],
-                        },
-                        {
-                            type: 'box',
-                            layout: 'baseline',
-                            spacing: 'sm',
-                            contents: [
-                                { type: 'text', text: '電話', color: '#3C3C3C', size: 'sm', flex: 1 },
-                                { type: 'text', text: restaurantPhone || '店家未提供電話', wrap: true, color: '#666666', size: 'sm', flex: 5 },
-                            ],
-                        },
-                    ],
-                },
-            ],
-        },
-    };
-
-    if (footerButtons.length > 0) {
-        flexContent.footer = {
-            type: 'box',
-            layout: footerButtons.length === 1 ? 'vertical' : 'horizontal',
-            spacing: 'sm',
-            contents: footerButtons,
-            flex: 0,
-        };
-    }
-
-    const payload = {
-        to: toGroupId,
-        messages: [
+        {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
             {
-                type: 'flex',
-                altText: `今日午餐推薦：${restaurantName}`,
-                contents: flexContent,
+              type: 'box',
+              layout: 'baseline',
+              spacing: 'sm',
+              contents: [
+                { type: 'text', text: '地址', color: '#3C3C3C', size: 'sm', flex: 1 },
+                { type: 'text', text: displayAddress, wrap: true, color: '#666666', size: 'sm', flex: 5 },
+              ],
             },
-        ],
-    };
-
-    const config = {
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+            {
+              type: 'box',
+              layout: 'baseline',
+              spacing: 'sm',
+              contents: [
+                { type: 'text', text: '電話', color: '#3C3C3C', size: 'sm', flex: 1 },
+                { type: 'text', text: restaurantPhone || '店家未提供電話', wrap: true, color: '#666666', size: 'sm', flex: 5 },
+              ],
+            },
+          ],
         },
-    };
+      ],
+    },
+  };
 
-    return axios.post(LINE_PUSH_API_URL, payload, config);
+  if (footerButtons.length > 0) {
+    flexContent.footer = {
+      type: 'box',
+      layout: footerButtons.length === 1 ? 'vertical' : 'horizontal',
+      spacing: 'sm',
+      contents: footerButtons,
+      flex: 0,
+    };
+  }
+
+  const payload = {
+    to: toGroupId,
+    messages: [
+      {
+        type: 'flex',
+        altText: `今日午餐推薦：${restaurantName}`,
+        contents: flexContent,
+      },
+    ],
+  };
+
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+    },
+  };
+
+  return axios.post(LINE_PUSH_API_URL, payload, config);
 }
 
 module.exports = router;

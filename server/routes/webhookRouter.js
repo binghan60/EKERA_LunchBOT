@@ -64,7 +64,7 @@ async function handleTextMessage(event, groupId, client) {
 
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: `嗨嗨～這是你的群組後台網址！\n用來設定推播通知、餐廳資料、開關啟用狀態等等～\n👉 ${clientUrl}/?groupId=${groupId}`,
+        text: `嗨嗨～這是你的群組後台網址！\n用來設定推播通知、餐廳資料、開關啟用狀態等等～\n👉 ${clientUrl}/?groupId=${groupId}\n\n你也可以輸入「抽獎」來隨機抽一間餐廳喔 🍽`,
       });
     } catch (error) {
       console.error('處理 /h 指令時錯誤：', error);
@@ -74,7 +74,23 @@ async function handleTextMessage(event, groupId, client) {
       });
     }
   }
-
+  if (msg === '抽獎') {
+    const payload = { groupId };
+    await client.replyMessage(event.replyToken, {
+      type: 'text',
+      text: '午餐醬幫你抽籤中～請稍等一下唷 🍽✨',
+    });
+    try {
+      await axios.post(`${apiPath}/api/random-restaurant`, payload);
+    } catch (err) {
+      console.error('抽獎失敗：', err.response?.data || err.message);
+      await client.pushMessage(groupId, {
+        type: 'text',
+        text: err.response?.data?.message || '嗚嗚～午餐醬抽籤失敗了，請稍後再試一次 🙇',
+      });
+    }
+    return;
+  }
   return Promise.resolve(null);
 }
 // 加入事件
