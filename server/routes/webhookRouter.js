@@ -1,8 +1,6 @@
 const line = require('@line/bot-sdk');
 const express = require('express');
-const Restaurant = require('../models/Restaurant');
-const GroupRestaurant = require('../models/GroupRestaurant');
-const mongoose = require('mongoose');
+const GroupSetting = require('../models/GroupSetting');
 const axios = require('axios');
 require('dotenv').config();
 
@@ -25,7 +23,6 @@ module.exports = (config) => {
 };
 
 async function handleEvent(event, client) {
-  const apiPath = process.env.API_BASE_URL;
   const sourceType = event.source.type;
   let groupId;
 
@@ -36,32 +33,76 @@ async function handleEvent(event, client) {
   } else if (sourceType === 'room') {
     groupId = event.source.roomId;
   }
-  if (event.type === 'message') {
-    const msg = event.message.text.trim();
-    if (msg === '/h') {
+
+  if (event.type === 'message' && event.message.type === 'text') {
+    return handleTextMessage(event, groupId, client);
+  }
+
+  if (event.type === 'join') {
+    return handleJoinEvent(event, groupId, client);
+  }
+
+  return Promise.resolve(null);
+}
+// 文字事件
+async function handleTextMessage(event, groupId, client) {
+  const msg = event.message.text.trim();
+  const apiPath = process.env.API_BASE_URL;
+  const clientUrl = process.env.CLIENT_URL;
+  if (msg === '/h') {
+    try {
+      const existSetting = await GroupSetting.findOne({ groupId });
+      if (!existSetting) {
+        const payload = {
+          groupId,
+          lunchNotification: false,
+          currentOffice: 'default',
+          officeOption: ['default'],
+        };
+        await axios.post(`${apiPath}/api/group-setting`, payload);
+      }
+
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: `嗨嗨～這是你的群組後台網址！\n用來設定推播通知、餐廳資料、開關啟用狀態等等～\n👉 https://ekera-lunch-bot-client.vercel.app/?groupId=${groupId}`,
+        text: `嗨嗨～這是你的群組後台網址！\n用來設定推播通知、餐廳資料、開關啟用狀態等等～\n👉 ${clientUrl}/?groupId=${groupId}`,
+      });
+    } catch (error) {
+      console.error('處理 /h 指令時錯誤：', error);
+      return client.replyMessage(event.replyToken, {
+        type: 'text',
+        text: '發生錯誤，無法取得後台網址，請稍後再試 😢',
       });
     }
   }
-  if (event.type === 'join') {
-    try {
+
+  return Promise.resolve(null);
+}
+// 加入事件
+async function handleJoinEvent(event, groupId, client) {
+  const apiPath = process.env.API_BASE_URL;
+  const clientUrl = process.env.CLIENT_URL;
+
+  try {
+    const existSetting = await GroupSetting.findOne({ groupId });
+    if (!existSetting) {
       const payload = {
         groupId,
         lunchNotification: false,
         currentOffice: 'default',
         officeOption: ['default'],
       };
-      const response = await axios.post(`${apiPath}/api/group-setting`, payload);
-    } catch (error) {
-      console.log(error);
+      await axios.post(`${apiPath}/api/group-setting`, payload);
     }
+  } catch (error) {
+    console.error('處理 join 事件時錯誤：', error);
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: `嗨嗨～謝謝你邀請我進來！\n請輸入 /h 呼叫後台～\n👉 https://ekera-lunch-bot-client.vercel.app/?groupId=${groupId}`,
+      text: '初始化群組設定時發生錯誤，請稍後再試 🙇',
     });
   }
 
-  return Promise.resolve(null);
+  return client.replyMessage(event.replyToken, {
+    type: 'text',
+    text: `嗨嗨～謝謝你邀請我進來！\n請輸入 /h 呼叫後台～\n👉 ${clientUrl}/?groupId=${groupId}`,
+  });
 }
