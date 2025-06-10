@@ -76,15 +76,15 @@ async function handleTextMessage(event, groupId, client) {
   }
   if (msg === '抽獎') {
     const payload = { groupId };
-    await client.replyMessage(event.replyToken, {
-      type: 'text',
-      text: '午餐醬幫你抽籤中～請稍等一下唷 🍽✨',
-    });
+    // await client.replyMessage(event.replyToken, {
+    //   type: 'text',
+    //   text: '午餐醬幫你抽籤中～請稍等一下唷 🍽✨',
+    // });
     try {
       await axios.post(`${apiPath}/api/random-restaurant`, payload);
     } catch (err) {
       console.error('抽獎失敗：', err.response?.data || err.message);
-      await client.pushMessage(groupId, {
+      await client.replyMessage(event.replyToken, {
         type: 'text',
         text: err.response?.data?.message || '嗚嗚～午餐醬抽籤失敗了，請稍後再試一次 🙇',
       });
