@@ -2,6 +2,8 @@ const line = require('@line/bot-sdk');
 const express = require('express');
 const GroupSetting = require('../models/GroupSetting');
 const axios = require('axios');
+const { drawRestaurant, createRestaurantFlexMessage } = require('../utils/restaurantUtils');
+
 require('dotenv').config();
 
 module.exports = (config) => {
@@ -49,6 +51,7 @@ async function handleTextMessage(event, groupId, client) {
   const msg = event.message.text.trim();
   const apiPath = process.env.API_BASE_URL;
   const clientUrl = process.env.CLIENT_URL;
+
   if (msg === '/h') {
     try {
       const existSetting = await GroupSetting.findOne({ groupId });
@@ -62,38 +65,102 @@ async function handleTextMessage(event, groupId, client) {
         await axios.post(`${apiPath}/api/group-setting`, payload);
       }
 
+      const helpMessage = `
+🎯 𝗟𝗜𝗡𝗘 𝗟𝗨𝗡𝗖𝗛 𝗕𝗢𝗧 🎯
+  ━━━━━━━━━━━━━
+🛠️ 群組後台管理
+  ━━━━━━━━━━━━━
+✨ 在這裡你可以：
+🔔 設定推播通知時間
+🏢 管理辦公室資料
+🍽️ 新增/編輯餐廳資料
+⚙️ 調整各種設定
+
+🌐 ${clientUrl}/?groupId=${groupId}
+  ━━━━━━━━━━━━━
+💡 小提示：輸入「抽獎」來隨機選餐廳！`;
+
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: `嗨嗨～這是你的群組後台網址！\n用來設定推播通知、餐廳資料、開關啟用狀態等等～\n👉 ${clientUrl}/?groupId=${groupId}\n\n你也可以輸入「抽獎」來隨機抽一間餐廳喔 🍽`,
+        text: helpMessage,
       });
     } catch (error) {
       console.error('處理 /h 指令時錯誤：', error);
       return client.replyMessage(event.replyToken, {
         type: 'text',
-        text: '發生錯誤，無法取得後台網址，請稍後再試 😢',
+        text: `
+❌ 系統錯誤
+━━━━━━━━━━━━━
+😢 無法取得後台網址
+請稍後再試一次，或聯絡管理員`,
       });
     }
   }
+
   if (msg === '抽獎') {
-    const payload = { groupId };
-    // await client.replyMessage(event.replyToken, {
-    //   type: 'text',
-    //   text: '午餐醬幫你抽籤中～請稍等一下唷 🍽✨',
-    // });
     try {
-      await axios.post(`${apiPath}/api/random-restaurant`, payload);
+      const groupSetting = await GroupSetting.findOne({ groupId });
+
+      if (!groupSetting) {
+        const noSettingMessage = `
+🔧 設定尚未完成
+━━━━━━━━━━━━━
+找不到群組設定，請先完成初始設定
+
+👉 輸入 /h 取得後台連結`;
+
+        await client.replyMessage(event.replyToken, {
+          type: 'text',
+          text: noSettingMessage,
+        });
+        return;
+      }
+
+      const restaurant = await drawRestaurant(groupSetting.groupId, groupSetting.currentOffice);
+      if (!restaurant) {
+        const noRestaurantMessage = `
+😅 沒有餐廳可以抽選
+━━━━━━━━━━━━━
+📍 辦公室：${groupSetting.currentOffice}
+
+🍽️ 請先到後台新增餐廳資料
+並將餐廳綁定到對應的辦公室
+
+🔗 ${clientUrl}/?groupId=${groupId}`;
+
+        await client.replyMessage(event.replyToken, {
+          type: 'text',
+          text: noRestaurantMessage,
+        });
+        return;
+      }
+
+      // 使用 Flex Message 顯示抽獎結果
+      const flexMessage = createRestaurantFlexMessage(restaurant);
+      await client.replyMessage(event.replyToken, flexMessage);
     } catch (err) {
-      console.error('抽獎失敗：', err.response?.data || err.message);
+      console.error('抽獎失敗：', err);
+
+      const errorMessage = `
+😵 抽獎系統暫時故障
+━━━━━━━━━━━━━
+🔧 系統正在維護中...
+請稍後再試一次
+
+或者手動選擇今天的午餐吧！ 🍜`;
+
       await client.replyMessage(event.replyToken, {
         type: 'text',
-        text: err.response?.data?.message || '嗚嗚～午餐醬抽籤失敗了，請稍後再試一次 🙇',
+        text: errorMessage,
       });
     }
     return;
   }
+
   return Promise.resolve(null);
 }
-// 加入事件
+
+// 加入群組事件處理函數
 async function handleJoinEvent(event, groupId, client) {
   const apiPath = process.env.API_BASE_URL;
   const clientUrl = process.env.CLIENT_URL;
@@ -111,14 +178,36 @@ async function handleJoinEvent(event, groupId, client) {
     }
   } catch (error) {
     console.error('處理 join 事件時錯誤：', error);
+
+    const initErrorMessage = `
+⚠️ 初始化失敗
+━━━━━━━━━━━━━
+群組設定初始化時發生錯誤
+請稍後再試，或聯絡系統管理員 🙇`;
+
     return client.replyMessage(event.replyToken, {
       type: 'text',
-      text: '初始化群組設定時發生錯誤，請稍後再試 🙇',
+      text: initErrorMessage,
     });
   }
 
+  const welcomeMessage = `
+🎉 歡迎使用午餐抽獎機器人！
+━━━━━━━━━━━━━
+👋 嗨嗨～謝謝邀請我加入群組！
+
+🎯 快速開始：
+1️⃣ 輸入 /h 開啟後台管理
+2️⃣ 新增餐廳資料
+3️⃣ 輸入「抽獎」開始使用
+
+🌐 後台網址：
+${clientUrl}/?groupId=${groupId}
+━━━━━━━━━━━━━
+讓我來幫你們解決選擇困難症！ 🍽️✨`;
+
   return client.replyMessage(event.replyToken, {
     type: 'text',
-    text: `嗨嗨～謝謝你邀請我進來！\n請輸入 /h 呼叫後台～\n👉 ${clientUrl}/?groupId=${groupId}`,
+    text: welcomeMessage,
   });
 }
