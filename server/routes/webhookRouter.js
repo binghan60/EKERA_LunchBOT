@@ -40,7 +40,7 @@ async function handleEvent(event, client) {
     return handleTextMessage(event, groupId, client);
   }
 
-  if (event.type === 'join') {
+  if (event.type === 'join' || event.type === 'follow') {
     return handleJoinEvent(event, groupId, client);
   }
 
@@ -160,7 +160,7 @@ async function handleTextMessage(event, groupId, client) {
   return Promise.resolve(null);
 }
 
-// 加入群組事件處理函數
+// 加入 群組 或 好友時
 async function handleJoinEvent(event, groupId, client) {
   const apiPath = process.env.API_BASE_URL;
   const clientUrl = process.env.CLIENT_URL;
