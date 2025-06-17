@@ -3,6 +3,7 @@ const router = express.Router();
 const axios = require('axios');
 const GroupSetting = require('../models/GroupSetting');
 const { drawRestaurant, createRestaurantFlexMessage, sendLineMessage } = require('../utils/restaurantUtils');
+const sendErrorEmail = require('../utils/sendEmail.js');
 
 /**
  * @swagger
@@ -228,6 +229,8 @@ router.post('/', async (req, res) => {
     }
   } catch (error) {
     console.error('Server error caught in router:', error);
+    await sendErrorEmail('🤖 每日午餐推播失敗了', error);
+
     res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
   }
 });

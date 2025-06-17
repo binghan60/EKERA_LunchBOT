@@ -3,6 +3,7 @@ const express = require('express');
 const GroupSetting = require('../models/GroupSetting');
 const axios = require('axios');
 const { drawRestaurant, createRestaurantFlexMessage } = require('../utils/restaurantUtils');
+const sendErrorEmail = require('../utils/sendEmail.js');
 
 require('dotenv').config();
 
@@ -17,6 +18,7 @@ module.exports = (config) => {
       res.json(results);
     } catch (err) {
       console.error(err);
+      await sendErrorEmail('🤖 LINE BOT 崩潰了！', err);
       res.status(500).end();
     }
   });
