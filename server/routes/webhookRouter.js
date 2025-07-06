@@ -1,13 +1,13 @@
-const line = require('@line/bot-sdk');
-const express = require('express');
-const GroupSetting = require('../models/GroupSetting');
-const axios = require('axios');
-const { drawRestaurant, createRestaurantFlexMessage } = require('../utils/restaurantUtils');
-const sendErrorEmail = require('../utils/sendEmail.js');
+import * as line from '@line/bot-sdk';
+import express from 'express';
+import GroupSetting from '../models/GroupSetting.js';
+import axios from 'axios';
+import { drawRestaurant, createRestaurantFlexMessage } from '../utils/restaurantUtils.js';
+import sendErrorEmail from '../utils/sendEmail.js';
 
-require('dotenv').config();
+import 'dotenv/config';
 
-module.exports = (config) => {
+export default (config) => {
   const router = express.Router();
   const client = new line.Client(config);
 

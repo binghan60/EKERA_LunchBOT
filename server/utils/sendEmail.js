@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
 const sendErrorEmail = async (subject, error) => {
   const transporter = nodemailer.createTransport({
@@ -24,4 +24,4 @@ const sendErrorEmail = async (subject, error) => {
   }
 };
 
-module.exports = sendErrorEmail;
+export default sendErrorEmail;

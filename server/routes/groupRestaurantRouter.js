@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const GroupRestaurant = require('../models/GroupRestaurant');
-const GroupSetting = require('../models/GroupSetting');
+import GroupRestaurant from '../models/GroupRestaurant.js';
+import GroupSetting from '../models/GroupSetting.js';
 
 router.get('/:groupId', async (req, res) => {
     try {
@@ -82,4 +82,4 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;

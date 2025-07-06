@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const GroupSetting = require('../models/GroupSetting');
-const GroupRestaurant = require('../models/GroupRestaurant');
+import GroupSetting from '../models/GroupSetting.js';
+import GroupRestaurant from '../models/GroupRestaurant.js';
 
 router.get('/:id', async (req, res) => {
   const groupId = req.params.id;
@@ -103,4 +103,4 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

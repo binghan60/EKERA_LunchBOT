@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const groupRestaurantSchema = new mongoose.Schema(
     {
@@ -14,4 +14,4 @@ const groupRestaurantSchema = new mongoose.Schema(
 );
 groupRestaurantSchema.index({ groupId: 1, office: 1, restaurantId: 1 }, { unique: true });
 groupRestaurantSchema.index({ groupId: 1, office: 1, isActiveInOffice: 1 });
-module.exports = mongoose.model('GroupRestaurant', groupRestaurantSchema);
+export default mongoose.model('GroupRestaurant', groupRestaurantSchema);

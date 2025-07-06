@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const groupSettingSchema = new mongoose.Schema(
     {
@@ -12,4 +12,4 @@ const groupSettingSchema = new mongoose.Schema(
     }
 );
 
-module.exports = mongoose.model('GroupSetting', groupSettingSchema);
+export default mongoose.model('GroupSetting', groupSettingSchema);

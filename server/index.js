@@ -1,12 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const line = require('@line/bot-sdk');
-const mongoose = require('mongoose');
-const apiRoutes = require('./routes/apiRouter.js');
-const webhookRoutes = require('./routes/webhookRouter.js');
-const cors = require('cors');
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpec = require('./swagger');
+import 'dotenv/config';
+import express from 'express';
+import * as line from '@line/bot-sdk';
+import mongoose from 'mongoose';
+import apiRoutes from './routes/apiRouter.js';
+import webhookRoutes from './routes/webhookRouter.js';
+import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
 
 const app = express();
 app.get('/', async (req, res) => {

@@ -1,9 +1,9 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const axios = require('axios');
-const GroupSetting = require('../models/GroupSetting');
-const { drawRestaurant, createRestaurantFlexMessage, sendLineMessage } = require('../utils/restaurantUtils');
-const sendErrorEmail = require('../utils/sendEmail.js');
+import axios from 'axios';
+import GroupSetting from '../models/GroupSetting.js';
+import { drawRestaurant, createRestaurantFlexMessage, sendLineMessage } from '../utils/restaurantUtils.js';
+import sendErrorEmail from '../utils/sendEmail.js';
 
 /**
  * @swagger
@@ -235,4 +235,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

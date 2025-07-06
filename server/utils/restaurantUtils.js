@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
-const GroupRestaurant = require('../models/GroupRestaurant');
-const Restaurant = require('../models/Restaurant');
-const axios = require('axios');
+import mongoose from 'mongoose';
+import GroupRestaurant from '../models/GroupRestaurant.js';
+import Restaurant from '../models/Restaurant.js';
+import axios from 'axios';
 
-async function drawRestaurant(groupId, office) {
+export async function drawRestaurant(groupId, office) {
   try {
     const groupRestaurants = await GroupRestaurant.find({
       groupId,
@@ -73,7 +73,7 @@ const WineDateTheme = {
   subText: '#998D95',
 };
 
-function createRestaurantFlexMessage(restaurant, options = {}) {
+export function createRestaurantFlexMessage(restaurant, options = {}) {
   const randomTheme = ThemeList[Math.floor(Math.random() * ThemeList.length)];
 
   const { title = '🎊 午餐轉盤結果 🎊', defaultImage = 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg', showMapButton = true, showPhoneButton = true, theme = randomTheme } = options;
@@ -276,7 +276,7 @@ function createRestaurantFlexMessage(restaurant, options = {}) {
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.CHANNEL_ACCESS_TOKEN; // 從環境變數讀取
 const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
 
-async function sendLineMessage(toGroupId, message) {
+export async function sendLineMessage(toGroupId, message) {
   if (!LINE_CHANNEL_ACCESS_TOKEN) {
     console.error('LINE_CHANNEL_ACCESS_TOKEN is not defined. Please check environment variables.');
     throw new Error('LINE Channel Access Token is missing.');
@@ -296,9 +296,3 @@ async function sendLineMessage(toGroupId, message) {
 
   return axios.post(LINE_PUSH_API_URL, payload, config);
 }
-
-module.exports = {
-  drawRestaurant,
-  createRestaurantFlexMessage,
-  sendLineMessage,
-};

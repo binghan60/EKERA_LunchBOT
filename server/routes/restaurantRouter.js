@@ -1,10 +1,10 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const Restaurant = require('../models/Restaurant');
-const GroupRestaurant = require('../models/GroupRestaurant');
-const mongoose = require('mongoose');
-const cloudinary = require('../utils/cloudinary');
-const upload = require('../middleware/multer');
+import Restaurant from '../models/Restaurant.js';
+import GroupRestaurant from '../models/GroupRestaurant.js';
+import mongoose from 'mongoose';
+import cloudinary from '../utils/cloudinary.js';
+import upload from '../middleware/multer.js';
 
 router.get('/', async (req, res) => {
   try {
@@ -153,4 +153,4 @@ function extractPublicId(url) {
   return match ? match[1] : null;
 }
 
-module.exports = router;
+export default router;

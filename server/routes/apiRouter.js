@@ -1,9 +1,9 @@
 // apiRoutes.js
-const express = require('express');
-const restaurantRoutes = require('./restaurantRouter');
-const groupSettingRoutes = require('./groupSettingRouter.js');
-const randomRestaurantRoutes = require('./randomRestaurantRouter.js');
-const groupRestaurantRoutes = require('./groupRestaurantRouter.js');
+import express from 'express';
+import restaurantRoutes from './restaurantRouter.js';
+import groupSettingRoutes from './groupSettingRouter.js';
+import randomRestaurantRoutes from './randomRestaurantRouter.js';
+import groupRestaurantRoutes from './groupRestaurantRouter.js';
 const router = express.Router();
 router.use(express.json());
 router.use('/group-setting', groupSettingRoutes);
@@ -11,4 +11,4 @@ router.use('/restaurant', restaurantRoutes);
 router.use('/random-restaurant', randomRestaurantRoutes);
 router.use('/group-restaurant', groupRestaurantRoutes);
 
-module.exports = router;
+export default router;
