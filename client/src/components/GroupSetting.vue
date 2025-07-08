@@ -96,6 +96,51 @@ const removeAllMenuImages = () => {
   menuPreviews.value = []
 }
 
+// ✅ 編輯模式下多張圖片上傳處理
+const handleEditFileChange = (e) => {
+  const files = Array.from(e.target.files)
+
+  // 檢查檔案數量限制（最多5張）
+  if ((editModal.restaurant.menu ? editModal.restaurant.menu.length : 0) + editModal.editMenuFiles.length + files.length > 5) {
+    toast.error('最多只能上傳5張圖片')
+    return
+  }
+
+  files.forEach((file) => {
+    // 檢查檔案類型
+    if (!file.type.startsWith('image/')) {
+      toast.error(`${file.name} 不是有效的圖片檔案`)
+      return
+    }
+
+    editModal.editMenuFiles.push(file)
+
+    // 產生預覽
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      editModal.editMenuPreviews.push({
+        src: e.target.result,
+        name: file.name,
+        index: editModal.editMenuFiles.length - 1,
+      })
+    }
+    reader.readAsDataURL(file)
+  })
+
+  // 清空 input，允許重複選擇相同檔案
+  e.target.value = ''
+}
+
+const removeNewEditImage = (index) => {
+  editModal.editMenuFiles.splice(index, 1)
+  editModal.editMenuPreviews.splice(index, 1)
+
+  // 重新索引預覽陣列
+  editModal.editMenuPreviews.forEach((preview, i) => {
+    preview.index = i
+  })
+}
+
 // ✅ 新增：拖拉功能相關變數
 const isDragging = ref(false)
 const draggedRestaurant = ref(null)
@@ -334,12 +379,16 @@ const editModal = reactive({
   restaurant: null,
   isSaving: false,
   imagesToDelete: [],
+  editMenuFiles: [], // 新增：編輯模式下新上傳的檔案
+  editMenuPreviews: [], // 新增：編輯模式下新上傳檔案的預覽
 })
 
 async function openEditModal(restaurant) {
   isLoading.value = true
   editModal.show = true
   editModal.imagesToDelete = [] // 重置待刪除列表
+  editModal.editMenuFiles = [] // 重置新上傳檔案
+  editModal.editMenuPreviews = [] // 重置新上傳預覽
   document.body.style.overflow = 'hidden'
   try {
     const { data } = await axios.get(`${API_PATH}/restaurant/${restaurant._id}?groupId=${groupId}`)
@@ -364,12 +413,23 @@ async function updateRestaurant() {
   if (!editModal.restaurant) return
   editModal.isSaving = true
   try {
-    const payload = {
-      ...editModal.restaurant,
-      groupId: groupId,
-      imagesToDelete: editModal.imagesToDelete, // 加入待刪除圖片列表
-    }
-    await axios.put(`${API_PATH}/restaurant/${editModal.restaurant._id}`, payload)
+    const formData = new FormData()
+    formData.append('groupId', groupId)
+    formData.append('name', editModal.restaurant.name)
+    formData.append('phone', editModal.restaurant.phone || '')
+    formData.append('address', editModal.restaurant.address || '')
+    formData.append('isActive', editModal.restaurant.isActive)
+    formData.append('imagesToDelete', JSON.stringify(editModal.imagesToDelete))
+
+    // 添加新上傳的圖片
+    editModal.editMenuFiles.forEach((file) => {
+      formData.append('menu', file)
+    })
+
+    await axios.put(`${API_PATH}/restaurant/${editModal.restaurant._id}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+
     toast.success('餐廳資料已更新！')
     await fetchRestaurants() // 重新載入列表以顯示更新
     closeEditModal()
@@ -671,14 +731,38 @@ watch(
               </div>
               <div>
                 <h4 class="text-sm font-medium text-amber-800 mb-2">菜單圖片管理</h4>
-                <div v-if="editModal.restaurant.menu && editModal.restaurant.menu.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div v-if="editModal.restaurant.menu && editModal.restaurant.menu.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
                   <div v-for="(image, index) in editModal.restaurant.menu" :key="index" class="relative group">
                     <img :src="image" alt="Menu Image" class="w-full h-28 object-cover rounded-lg border" />
                     <button @click.prevent="removeEditImage(index)" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 transition" title="移除圖片"><i class="fa-solid fa-times"></i></button>
                   </div>
                 </div>
-                <p v-else class="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">目前沒有菜單圖片。</p>
-                <p class="text-xs text-gray-500 mt-2">注意：此處僅能移除現有圖片，如需新增，請刪除此餐廳後重新建立。</p>
+                <p v-else class="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg mb-4">目前沒有菜單圖片。</p>
+
+                <!-- 新增圖片上傳區塊 -->
+                <div class="mb-4">
+                  <label for="edit-menu-upload" class="flex items-center justify-center px-4 py-6 bg-amber-100 text-amber-700 border-2 border-dashed border-amber-300 rounded-lg cursor-pointer hover:bg-amber-200 transition duration-200">
+                    <i class="fa-solid fa-cloud-arrow-up text-2xl mr-3"></i>
+                    <span>{{ editModal.editMenuFiles.length > 0 ? `已選擇 ${editModal.editMenuFiles.length} 張新圖片` : '點我上傳新菜單圖片 (可多選)' }}</span>
+                  </label>
+                  <input id="edit-menu-upload" type="file" accept=".png, .jpg, .jpeg" multiple @change="handleEditFileChange" class="sr-only" />
+                  <div class="flex justify-between items-center mt-1">
+                    <p class="text-xs text-amber-600 ml-1">支援jpg/png，最多5張 (包含現有圖片)</p>
+                    <button v-if="editModal.editMenuFiles.length > 0" @click="removeNewEditImage" type="button" class="text-xs text-red-500 hover:text-red-700 underline">清空新圖片</button>
+                  </div>
+                </div>
+
+                <div v-if="editModal.editMenuPreviews.length > 0" class="mb-4">
+                  <p class="text-sm text-amber-700 mb-3">新菜單預覽 ({{ (editModal.restaurant.menu ? editModal.restaurant.menu.length : 0) + editModal.editMenuPreviews.length }}/5):</p>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <div v-for="(preview, index) in editModal.editMenuPreviews" :key="index" class="relative border border-amber-300 rounded-lg overflow-hidden shadow-sm">
+                      <img :src="preview.src" :alt="`新預覽 ${index + 1}`" class="w-full h-28 object-cover" />
+                      <button @click="removeNewEditImage(index)" type="button" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition shadow-lg" title="移除圖片">
+                        <i class="fa-solid fa-times text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </form>
           </div>

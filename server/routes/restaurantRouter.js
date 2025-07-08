@@ -94,21 +94,39 @@ router.post('/', upload.array('menu', 5), async (req, res) => {
 
 router.put('/:id', upload.array('menu', 5), async (req, res) => {
   const { id } = req.params;
-  const { groupId, imagesToDelete, name, address, phone, menu, tags, isActive } = req.body;
+  const { groupId, imagesToDelete, name, address, phone, tags, isActive } = req.body;
   try {
-
     if (!groupId) return res.status(400).json({ message: 'groupId 是必填欄位' });
 
     const isValidId = mongoose.Types.ObjectId.isValid(id);
     if (!isValidId) return res.status(400).json({ message: '非法的餐廳 ID' });
 
+    const restaurant = await Restaurant.findOne({ _id: id, groupId });
+    if (!restaurant) return res.status(404).json({ message: '找不到餐廳或無權限編輯' });
+
+    let currentMenu = restaurant.menu || [];
+
+    let imagesToDeleteArray = [];
+    if (imagesToDelete) {
+      try {
+        imagesToDeleteArray = JSON.parse(imagesToDelete);
+        if (!Array.isArray(imagesToDeleteArray)) {
+          imagesToDeleteArray = []; // Ensure it's an array even if parsing results in non-array
+        }
+      } catch (parseError) {
+        console.warn('Failed to parse imagesToDelete JSON string:', parseError);
+        imagesToDeleteArray = [];
+      }
+    }
+
     // 刪除指定的 Cloudinary 圖片
-    if (imagesToDelete && Array.isArray(imagesToDelete)) {
-      for (const url of imagesToDelete) {
+    if (imagesToDeleteArray.length > 0) {
+      for (const url of imagesToDeleteArray) {
         const publicId = extractPublicId(url);
         if (publicId) {
           try {
             await cloudinary.uploader.destroy(publicId);
+            currentMenu = currentMenu.filter((item) => item !== url); // 從現有菜單中移除已刪除的圖片
           } catch (err) {
             const imageErrorMessage = `編輯時刪除 Cloudinary 圖片失敗: ${publicId}`;
             console.warn(imageErrorMessage, err);
@@ -118,19 +136,37 @@ router.put('/:id', upload.array('menu', 5), async (req, res) => {
       }
     }
 
+    // 上傳所有新圖片到 Cloudinary
+    const newMenuImageUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream({ folder: `EKERA_Lunch_BOT/${groupId}` }, (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          });
+          stream.end(file.buffer);
+        });
+        newMenuImageUrls.push(result.secure_url);
+      }
+    }
+
+    // 合併現有圖片（已移除刪除的）與新上傳的圖片
+    const updatedMenu = [...currentMenu, ...newMenuImageUrls];
+
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (tags !== undefined) updateData.tags = tags;
     if (address !== undefined) updateData.address = address;
     if (phone !== undefined) updateData.phone = phone;
-    if (menu !== undefined) updateData.menu = menu;
+    updateData.menu = updatedMenu; // 總是更新 menu 欄位
     if (isActive !== undefined) updateData.isActive = isActive;
 
-    const restaurant = await Restaurant.findOneAndUpdate({ _id: id, groupId }, { $set: updateData }, { new: true });
+    const updatedRestaurant = await Restaurant.findOneAndUpdate({ _id: id, groupId }, { $set: updateData }, { new: true });
 
-    if (!restaurant) return res.status(404).json({ message: '找不到餐廳或無權限編輯' });
+    if (!updatedRestaurant) return res.status(404).json({ message: '找不到餐廳或無權限編輯' });
 
-    res.status(200).json({ message: '更新成功', restaurant });
+    res.status(200).json({ message: '更新成功', restaurant: updatedRestaurant });
   } catch (error) {
     const errorMessage = `更新餐廳時發生錯誤，ID: ${id}`;
     console.error(errorMessage, error);
@@ -185,8 +221,24 @@ router.delete('/:id', async (req, res) => {
 });
 
 function extractPublicId(url) {
-  const match = url.match(/upload\/(?:v\d+\/)?(.+)\.(jpg|jpeg|png|webp|gif)/);
-  return match ? match[1] : null;
+  const uploadIndex = url.indexOf('/upload/');
+  if (uploadIndex === -1) {
+    return null;
+  }
+  let startIndex = uploadIndex + '/upload/'.length;
+
+  // Check for version part like v123/
+  const versionMatch = url.substring(startIndex).match(/^v\d+\//);
+  if (versionMatch) {
+    startIndex += versionMatch[0].length;
+  }
+
+  const dotIndex = url.lastIndexOf('.');
+  if (dotIndex === -1 || dotIndex < startIndex) {
+    return null;
+  }
+
+  return url.substring(startIndex, dotIndex);
 }
 
 export default router;
