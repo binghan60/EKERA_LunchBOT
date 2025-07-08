@@ -93,7 +93,7 @@ router.post('/', upload.array('menu', 5), async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const { groupId } = req.body;
+  const { groupId, imagesToDelete } = req.body;
   const { id } = req.params;
   try {
     const { name, address, phone, menu, tags, isActive } = req.body;
@@ -102,6 +102,22 @@ router.put('/:id', async (req, res) => {
 
     const isValidId = mongoose.Types.ObjectId.isValid(id);
     if (!isValidId) return res.status(400).json({ message: '非法的餐廳 ID' });
+
+    // 刪除指定的 Cloudinary 圖片
+    if (imagesToDelete && Array.isArray(imagesToDelete)) {
+      for (const url of imagesToDelete) {
+        const publicId = extractPublicId(url);
+        if (publicId) {
+          try {
+            await cloudinary.uploader.destroy(publicId);
+          } catch (err) {
+            const imageErrorMessage = `編輯時刪除 Cloudinary 圖片失敗: ${publicId}`;
+            console.warn(imageErrorMessage, err);
+            await sendErrorEmail(imageErrorMessage, err.stack || err);
+          }
+        }
+      }
+    }
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
