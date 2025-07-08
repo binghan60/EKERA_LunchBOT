@@ -732,7 +732,7 @@ watch(
               <div>
                 <h4 class="text-sm font-medium text-amber-800 mb-2">菜單圖片管理</h4>
                 <div v-if="editModal.restaurant.menu && editModal.restaurant.menu.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-4">
-                  <div v-for="(image, index) in editModal.restaurant.menu" :key="index" class="relative group">
+                  <div v-for="(image, index) in editModal.restaurant.menu" :key="image" class="relative group">
                     <img :src="image" alt="Menu Image" class="w-full h-28 object-cover rounded-lg border" />
                     <button @click.prevent="removeEditImage(index)" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-700 transition" title="移除圖片"><i class="fa-solid fa-times"></i></button>
                   </div>

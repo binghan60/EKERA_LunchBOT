@@ -57,19 +57,21 @@ router.post('/', upload.array('menu', 5), async (req, res) => {
       return res.status(409).json({ message: `'${exists.name}'餐廳已存在` });
     }
 
-    // 上傳所有圖片到 Cloudinary
+    // 上傳所有圖片到 Cloudinary (平行處理)
     const menuImageUrls = [];
-    if (req.files) {
-      for (const file of req.files) {
-        const result = await new Promise((resolve, reject) => {
+    if (req.files && req.files.length > 0) {
+      const uploadPromises = req.files.map(file => {
+        return new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream({ folder: `EKERA_Lunch_BOT/${groupId}` }, (error, result) => {
             if (error) reject(error);
             else resolve(result);
           });
           stream.end(file.buffer);
         });
-        menuImageUrls.push(result.secure_url);
-      }
+      });
+
+      const uploadResults = await Promise.all(uploadPromises);
+      uploadResults.forEach(result => menuImageUrls.push(result.secure_url));
     }
 
     const restaurant = new Restaurant({
@@ -119,36 +121,49 @@ router.put('/:id', upload.array('menu', 5), async (req, res) => {
       }
     }
 
-    // 刪除指定的 Cloudinary 圖片
+    // 刪除指定的 Cloudinary 圖片 (平行處理)
     if (imagesToDeleteArray.length > 0) {
-      for (const url of imagesToDeleteArray) {
+      const deletionPromises = imagesToDeleteArray.map(async (url) => {
         const publicId = extractPublicId(url);
         if (publicId) {
           try {
             await cloudinary.uploader.destroy(publicId);
-            currentMenu = currentMenu.filter((item) => item !== url); // 從現有菜單中移除已刪除的圖片
+            return { status: 'fulfilled', url };
           } catch (err) {
             const imageErrorMessage = `編輯時刪除 Cloudinary 圖片失敗: ${publicId}`;
             console.warn(imageErrorMessage, err);
             await sendErrorEmail(imageErrorMessage, err.stack || err);
+            return { status: 'rejected', url, error: err };
           }
         }
-      }
+        return { status: 'fulfilled', url }; // If no publicId, consider it fulfilled for filtering
+      });
+
+      const results = await Promise.allSettled(deletionPromises);
+
+      // 根據刪除結果更新 currentMenu
+      const successfullyDeletedUrls = results
+        .filter(result => result.status === 'fulfilled')
+        .map(result => result.value.url);
+
+      currentMenu = currentMenu.filter(item => !successfullyDeletedUrls.includes(item));
     }
 
-    // 上傳所有新圖片到 Cloudinary
+    // 上傳所有新圖片到 Cloudinary (平行處理)
     const newMenuImageUrls = [];
     if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        const result = await new Promise((resolve, reject) => {
+      const uploadPromises = req.files.map(file => {
+        return new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream({ folder: `EKERA_Lunch_BOT/${groupId}` }, (error, result) => {
             if (error) reject(error);
             else resolve(result);
           });
           stream.end(file.buffer);
         });
-        newMenuImageUrls.push(result.secure_url);
-      }
+      });
+
+      const uploadResults = await Promise.all(uploadPromises);
+      uploadResults.forEach(result => newMenuImageUrls.push(result.secure_url));
     }
 
     // 合併現有圖片（已移除刪除的）與新上傳的圖片
