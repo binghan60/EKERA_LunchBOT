@@ -1,12 +1,32 @@
-import "dotenv/config";
-import express from "express";
-import * as line from "@line/bot-sdk";
-import mongoose from "mongoose";
-import apiRoutes from "./routes/apiRouter.js";
-import webhookRoutes from "./routes/webhookRouter.js";
-import cors from "cors";
-import swaggerUi from "swagger-ui-express";
-import swaggerSpec from "./swagger.js";
+import 'dotenv/config';
+import express from 'express';
+import * as line from '@line/bot-sdk';
+import mongoose from 'mongoose';
+import apiRoutes from './routes/apiRouter.js';
+import webhookRoutes from './routes/webhookRouter.js';
+import cors from 'cors';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger.js';
+import sendErrorEmail from './utils/sendEmail.js';
+
+// Global error handling to send email on crash
+process.on('uncaughtException', (err, origin) => {
+  const errorDetails = `Caught exception: ${err}\n` + `Exception origin: ${origin}\n\n${err.stack}`;
+  console.error(errorDetails);
+  // Try to send email and then exit.
+  sendErrorEmail('🤖 機器人崩潰：未捕捉的例外 (Uncaught Exception)', errorDetails).finally(() => {
+    process.exit(1);
+  });
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  const errorDetails = `Unhandled Rejection at: ${promise}\nReason: ${reason.stack || reason}`;
+  console.error(errorDetails);
+  // Try to send email and then exit.
+  sendErrorEmail('🤖 機器人崩潰：未處理的 Promise 拒絕 (Unhandled Rejection)', errorDetails).finally(() => {
+    process.exit(1);
+  });
+});
 
 const app = express();
 app.get("/", async (req, res) => {

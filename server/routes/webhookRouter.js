@@ -142,6 +142,8 @@ async function handleTextMessage(event, groupId, client) {
       await client.replyMessage(event.replyToken, flexMessage);
     } catch (err) {
       console.error('抽獎失敗：', err);
+      // Send email notification on error
+      await sendErrorEmail('🤖 抽獎功能錯誤', err.stack || err);
 
       const errorMessage = `
 😵 抽獎系統暫時故障

@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import GroupSetting from '../models/GroupSetting.js';
 import GroupRestaurant from '../models/GroupRestaurant.js';
+import sendErrorEmail from '../utils/sendEmail.js';
 
 router.get('/:id', async (req, res) => {
   const groupId = req.params.id;
@@ -17,7 +18,9 @@ router.get('/:id', async (req, res) => {
     }
     res.status(200).json(groupSetting);
   } catch (err) {
-    console.error('讀取群組設定失敗：', err);
+    const errorMessage = `讀取群組設定失敗，群組ID: ${groupId}`;
+    console.error(errorMessage, err);
+    await sendErrorEmail(errorMessage, err.stack || err);
     res.status(500).send('伺服器錯誤');
   }
 });
@@ -48,7 +51,9 @@ router.post('/', async (req, res) => {
     await newSetting.save();
     res.status(201).json(newSetting);
   } catch (err) {
-    console.error('建立群組設定失敗：', err);
+    const errorMessage = `建立群組設定失敗，群組ID: ${groupId}`;
+    console.error(errorMessage, err);
+    await sendErrorEmail(errorMessage, err.stack || err);
     res.status(500).send('伺服器錯誤');
   }
 });
@@ -61,24 +66,24 @@ router.put('/:id', async (req, res) => {
     return res.status(400).send('請提供 groupId');
   }
 
-  const groupSetting = await GroupSetting.findOne({ groupId });
-  if (!groupSetting) {
-    return res.status(404).send('找不到該群組設定');
-  }
-
-  if (officeOption && currentOffice && !officeOption.includes(currentOffice)) {
-    return res.status(400).send('currentOffice 必須包含在 officeOption 裡');
-  }
-  if (!groupSetting.officeOption.includes(currentOffice)) {
-    return res.status(400).send('currentOffice 必須包含在 officeOption 裡');
-  }
-
-  const updateFields = {};
-  if (lunchNotification !== undefined) updateFields.lunchNotification = lunchNotification;
-  if (currentOffice !== undefined) updateFields.currentOffice = currentOffice;
-  if (officeOption !== undefined) updateFields.officeOption = officeOption;
-
   try {
+    const groupSetting = await GroupSetting.findOne({ groupId });
+    if (!groupSetting) {
+      return res.status(404).send('找不到該群組設定');
+    }
+
+    if (officeOption && currentOffice && !officeOption.includes(currentOffice)) {
+      return res.status(400).send('currentOffice 必須包含在 officeOption 裡');
+    }
+    if (currentOffice && !groupSetting.officeOption.includes(currentOffice)) {
+      return res.status(400).send('currentOffice 必須包含在 officeOption 裡');
+    }
+
+    const updateFields = {};
+    if (lunchNotification !== undefined) updateFields.lunchNotification = lunchNotification;
+    if (currentOffice !== undefined) updateFields.currentOffice = currentOffice;
+    if (officeOption !== undefined) updateFields.officeOption = officeOption;
+
     // 找出被移除的辦公室
     let removedOffices = [];
     if (officeOption !== undefined) {
@@ -98,7 +103,9 @@ router.put('/:id', async (req, res) => {
 
     res.status(200).json(updated);
   } catch (err) {
-    console.error('更新群組設定失敗：', err);
+    const errorMessage = `更新群組設定失敗，群組ID: ${groupId}`;
+    console.error(errorMessage, err);
+    await sendErrorEmail(errorMessage, err.stack || err);
     res.status(500).send('伺服器錯誤');
   }
 });
