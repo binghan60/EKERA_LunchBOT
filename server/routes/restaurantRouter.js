@@ -92,11 +92,10 @@ router.post('/', upload.array('menu', 5), async (req, res) => {
   }
 });
 
-router.put('/:id', async (req, res) => {
-  const { groupId, imagesToDelete } = req.body;
+router.put('/:id', upload.array('menu', 5), async (req, res) => {
   const { id } = req.params;
+  const { groupId, imagesToDelete, name, address, phone, menu, tags, isActive } = req.body;
   try {
-    const { name, address, phone, menu, tags, isActive } = req.body;
 
     if (!groupId) return res.status(400).json({ message: 'groupId 是必填欄位' });
 
