@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/prettierrc",
-  "semi": true,
+  "semi": false,
   "singleQuote": true,
   "printWidth": 5000,
-  "htmlWhitespaceSensitivity": "ignore",   
-  "vueIndentScriptAndStyle": false         
+  "htmlWhitespaceSensitivity": "ignore",
+  "vueIndentScriptAndStyle": false
 }
