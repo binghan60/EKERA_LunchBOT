@@ -128,8 +128,8 @@
                   <button
                     v-if="office !== groupSetting.currentOffice"
                     @click="
-                      groupSetting.currentOffice = office;
-                      saveSetting();
+                      groupSetting.currentOffice = office
+                      saveSetting()
                     "
                     class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg transition"
                   >
@@ -234,10 +234,10 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted, watch } from 'vue';
-import axios from 'axios';
-import { useToast } from 'vue-toastification';
-const toast = useToast();
+import { reactive, ref, computed, onMounted, watch } from 'vue'
+import axios from 'axios'
+import { useToast } from 'vue-toastification'
+const toast = useToast()
 
 // ✅ 接收 prop
 const props = defineProps({
@@ -245,18 +245,18 @@ const props = defineProps({
     type: String,
     required: true,
   },
-});
-const groupId = props.groupId;
+})
+const groupId = props.groupId
 
 // ✅ 檢查 groupId 是否存在
 if (!groupId) {
-  toast.error('找不到 groupId！網址應��含 ?groupId=xxx');
-  throw new Error('Missing groupId in props');
+  toast.error('找不到 groupId！網址應��含 ?groupId=xxx')
+  throw new Error('Missing groupId in props')
 }
 
-const API_PATH = import.meta.env.VITE_API_PATH || '';
-const API_Route = 'group-setting';
-const isLoading = ref(false);
+const API_PATH = import.meta.env.VITE_API_PATH || ''
+const API_Route = 'group-setting'
+const isLoading = ref(false)
 
 // ✅ 群組設定資料
 const groupSetting = reactive({
@@ -264,32 +264,32 @@ const groupSetting = reactive({
   lunchNotification: true,
   currentOffice: '',
   officeOption: [],
-});
+})
 
-const newOffice = ref('');
+const newOffice = ref('')
 
 // ✅ 餐廳表單與清單
-const restaurants = ref([]);
-const form = ref({ name: '', phone: '', address: '', tags: '' });
+const restaurants = ref([])
+const form = ref({ name: '', phone: '', address: '', tags: '' })
 
 // ✅ 多張圖片上傳處理
-const menuFiles = ref([]); // 改為陣列存儲多個檔案
-const menuPreviews = ref([]); // 改為陣列存儲多個預覽
+const menuFiles = ref([]) // 改為陣列存儲多個檔案
+const menuPreviews = ref([]) // 改為陣列存儲多個預覽
 
 const handleFileChange = (e) => {
-  const files = Array.from(e.target.files); // 轉換為陣列
+  const files = Array.from(e.target.files) // 轉換為陣列
 
   // 檢查檔案數量限制（最多5張）
   if (menuFiles.value.length + files.length > 5) {
-    toast.error('最多只能上傳5張圖片');
-    return;
+    toast.error('最多只能上傳5張圖片')
+    return
   }
 
   files.forEach((file) => {
     // 檢查檔案類型
     if (!file.type.startsWith('image/')) {
-      toast.error(`${file.name} 不是有效的圖片檔案`);
-      return;
+      toast.error(`${file.name} 不是有效的圖片檔案`)
+      return
     }
 
     // 檢查檔案大小（例如：限制5MB）
@@ -298,171 +298,171 @@ const handleFileChange = (e) => {
     //   return;
     // }
 
-    menuFiles.value.push(file);
+    menuFiles.value.push(file)
 
     // 產生預覽
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = (e) => {
       menuPreviews.value.push({
         src: e.target.result,
         name: file.name,
         index: menuFiles.value.length - 1,
-      });
-    };
-    reader.readAsDataURL(file);
-  });
+      })
+    }
+    reader.readAsDataURL(file)
+  })
 
   // 清空 input，允許重複選擇相同檔案
-  e.target.value = '';
-};
+  e.target.value = ''
+}
 
 const removeMenuImage = (index) => {
-  menuFiles.value.splice(index, 1);
-  menuPreviews.value.splice(index, 1);
+  menuFiles.value.splice(index, 1)
+  menuPreviews.value.splice(index, 1)
 
   // 重新索引預覽陣列
   menuPreviews.value.forEach((preview, i) => {
-    preview.index = i;
-  });
-};
+    preview.index = i
+  })
+}
 
 const removeAllMenuImages = () => {
-  menuFiles.value = [];
-  menuPreviews.value = [];
-};
+  menuFiles.value = []
+  menuPreviews.value = []
+}
 
 // ✅ 新增：拖拉功能相關變數
-const isDragging = ref(false);
-const draggedRestaurant = ref(null);
-const dragOverOffice = ref(null);
-const officeRestaurants = ref([]); // 辦公室餐廳綁定清單
+const isDragging = ref(false)
+const draggedRestaurant = ref(null)
+const dragOverOffice = ref(null)
+const officeRestaurants = ref([]) // 辦公室餐廳綁定清單
 
 // -------------------- 群組設定 --------------------
 
 async function fetchGroupSetting() {
-  isLoading.value = true;
+  isLoading.value = true
   try {
-    const { data } = await axios.get(`${API_PATH}/${API_Route}/${groupId}`);
-    groupSetting.lunchNotification = data.lunchNotification;
-    groupSetting.currentOffice = data.currentOffice;
-    groupSetting.officeOption = data.officeOption;
+    const { data } = await axios.get(`${API_PATH}/${API_Route}/${groupId}`)
+    groupSetting.lunchNotification = data.lunchNotification
+    groupSetting.currentOffice = data.currentOffice
+    groupSetting.officeOption = data.officeOption
   } catch {
-    toast.warning('找不到群組設定');
+    toast.warning('找不到群組設定')
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
 async function saveSetting() {
-  isLoading.value = true;
+  isLoading.value = true
   const payload = {
     groupId,
     lunchNotification: groupSetting.lunchNotification,
     currentOffice: groupSetting.currentOffice,
     officeOption: groupSetting.officeOption,
-  };
+  }
 
   try {
-    await axios.put(`${API_PATH}/${API_Route}/${groupId}`, payload);
-    toast.success('設定已更新！');
+    await axios.put(`${API_PATH}/${API_Route}/${groupId}`, payload)
+    toast.success('設定已更新！')
   } catch (err) {
     if (err.response?.status === 404) {
       try {
-        await axios.post(`${API_PATH}/${API_Route}`, payload);
-        toast.success('新群組設定已建立！');
+        await axios.post(`${API_PATH}/${API_Route}`, payload)
+        toast.success('新群組設定已建立！')
       } catch (postErr) {
-        toast.error('建立群組失敗：' + postErr.message);
+        toast.error('建立群組失敗：' + postErr.message)
       }
     } else {
-      toast.error('更新失敗：' + err.message);
+      toast.error('更新失敗：' + err.message)
     }
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
 function addOffice() {
-  const trimmed = newOffice.value.trim();
-  if (!trimmed) return toast.info('辦公室名稱不能為空。');
-  if (groupSetting.officeOption.includes(trimmed)) return toast.info('辦公室名稱已存在。');
+  const trimmed = newOffice.value.trim()
+  if (!trimmed) return toast.info('辦公室名稱不能為空。')
+  if (groupSetting.officeOption.includes(trimmed)) return toast.info('辦公室名稱已存在。')
 
-  groupSetting.officeOption.push(trimmed);
-  newOffice.value = '';
-  saveSetting();
+  groupSetting.officeOption.push(trimmed)
+  newOffice.value = ''
+  saveSetting()
 }
 
 function removeOffice(officeName) {
   if (officeName === groupSetting.currentOffice) {
-    toast.warning('無法刪除目前正在使用的辦公室');
-    return;
+    toast.warning('無法刪除目前正在使用的辦公室')
+    return
   }
-  groupSetting.officeOption = groupSetting.officeOption.filter((o) => o !== officeName);
-  saveSetting();
+  groupSetting.officeOption = groupSetting.officeOption.filter((o) => o !== officeName)
+  saveSetting()
 }
 
 // -------------------- 餐廳設定 --------------------
 
 async function fetchRestaurants() {
-  if (!groupId) return;
-  isLoading.value = true;
+  if (!groupId) return
+  isLoading.value = true
   try {
-    const { data } = await axios.get(`${API_PATH}/restaurant?groupId=${groupId}`);
-    restaurants.value = data;
+    const { data } = await axios.get(`${API_PATH}/restaurant?groupId=${groupId}`)
+    restaurants.value = data
   } catch (err) {
-    toast.error(err.data?.message || '餐廳資料讀取失敗');
+    toast.error(err.data?.message || '餐廳資料讀取失敗')
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
 }
 
 const createRestaurant = async () => {
   if (!form.value.name) {
-    toast.error('請填寫餐廳名稱');
-    return;
+    toast.error('請填寫餐廳名稱')
+    return
   }
 
   try {
-    isLoading.value = true;
-    const formData = new FormData();
-    formData.append('groupId', groupId);
-    formData.append('name', form.value.name);
-    formData.append('phone', form.value.phone || '');
-    formData.append('address', form.value.address || '');
-    formData.append('tags', JSON.stringify(form.value.tags || []));
+    isLoading.value = true
+    const formData = new FormData()
+    formData.append('groupId', groupId)
+    formData.append('name', form.value.name)
+    formData.append('phone', form.value.phone || '')
+    formData.append('address', form.value.address || '')
+    formData.append('tags', JSON.stringify(form.value.tags || []))
 
     // 添加所有菜單圖片
     menuFiles.value.forEach((file) => {
-      formData.append('menu', file);
-    });
+      formData.append('menu', file)
+    })
 
     await axios.post(`${API_PATH}/restaurant`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    })
 
-    toast.success('新增成功');
-    await fetchRestaurants();
+    toast.success('新增成功')
+    await fetchRestaurants()
 
     // 重置表單
-    form.value = { name: '', phone: '', address: '', tags: [] };
-    menuFiles.value = [];
-    menuPreviews.value = [];
+    form.value = { name: '', phone: '', address: '', tags: [] }
+    menuFiles.value = []
+    menuPreviews.value = []
   } catch (err) {
-    console.log(err);
-    toast.error('新增失敗');
+    console.log(err)
+    toast.error('新增失敗')
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
 async function deleteRestaurant(id) {
-  if (!confirm('確定要刪除這間餐廳嗎？')) return;
+  if (!confirm('確定要刪除這間餐廳嗎？')) return
   try {
-    await axios.delete(`${API_PATH}/restaurant/${id}`, { data: { groupId } });
-    restaurants.value = restaurants.value.filter((r) => r._id !== id);
-    await fetchOfficeRestaurants();
-    toast.success('刪除成功');
+    await axios.delete(`${API_PATH}/restaurant/${id}`, { data: { groupId } })
+    restaurants.value = restaurants.value.filter((r) => r._id !== id)
+    await fetchOfficeRestaurants()
+    toast.success('刪除成功')
   } catch (err) {
-    toast.error(err.data?.message || '刪除失敗');
+    toast.error(err.data?.message || '刪除失敗')
   }
 }
 
@@ -470,63 +470,63 @@ async function deleteRestaurant(id) {
 
 // 取得指定辦公室的餐廳清單
 function getOfficeRestaurants(office) {
-  return officeRestaurants.value.filter((binding) => binding.office === office);
+  return officeRestaurants.value.filter((binding) => binding.office === office)
 }
 
 // 開始拖拉
 function startDrag(restaurant) {
-  isDragging.value = true;
-  draggedRestaurant.value = restaurant;
+  isDragging.value = true
+  draggedRestaurant.value = restaurant
 }
 
 // 結束拖拉
 function endDrag() {
-  isDragging.value = false;
-  dragOverOffice.value = null;
+  isDragging.value = false
+  dragOverOffice.value = null
 }
 
 // 放下餐廳到辦公室
 async function dropRestaurant(office) {
-  if (!draggedRestaurant.value) return;
-  dragOverOffice.value = null;
+  if (!draggedRestaurant.value) return
+  dragOverOffice.value = null
   try {
     // 檢查是否已經��定
-    const existing = officeRestaurants.value.find((binding) => binding.office === office && binding.restaurantId._id === draggedRestaurant.value._id);
+    const existing = officeRestaurants.value.find((binding) => binding.office === office && binding.restaurantId._id === draggedRestaurant.value._id)
 
     if (existing) {
-      toast.info('此餐廳已綁定到該辦公室');
-      return;
+      toast.info('此餐廳已綁定到該辦公室')
+      return
     }
-    isLoading.value = true;
+    isLoading.value = true
     await axios.post(`${API_PATH}/group-restaurant`, {
       groupId,
       office,
       restaurantId: draggedRestaurant.value._id,
       isActiveInOffice: true,
-    });
-    toast.success(`已將 ${draggedRestaurant.value.name} 綁定到 ${office}`);
+    })
+    toast.success(`已將 ${draggedRestaurant.value.name} 綁定到 ${office}`)
 
     // 重新載入綁定清單
-    await fetchOfficeRestaurants();
+    await fetchOfficeRestaurants()
   } catch (err) {
-    console.error('綁定失敗:', err);
-    toast.error(err.response?.data?.error || '綁定失敗');
+    console.error('綁定失敗:', err)
+    toast.error(err.response?.data?.error || '綁定失敗')
   } finally {
-    isLoading.value = false;
-    endDrag();
+    isLoading.value = false
+    endDrag()
   }
 }
 
 // 載入辦公室餐廳綁定清單
 async function fetchOfficeRestaurants() {
-  if (!groupId) return;
+  if (!groupId) return
 
   try {
-    const { data } = await axios.get(`${API_PATH}/group-restaurant/${groupId}`);
-    officeRestaurants.value = data;
+    const { data } = await axios.get(`${API_PATH}/group-restaurant/${groupId}`)
+    officeRestaurants.value = data
   } catch (err) {
-    console.error('載入辦公室餐廳清單失敗:', err);
-    toast.error('載入辦公室餐廳清單失敗');
+    console.error('載入辦公室餐廳清單失敗:', err)
+    toast.error('載入辦公室餐廳清單失敗')
   }
 }
 
@@ -535,31 +535,31 @@ async function toggleOfficeRestaurant(binding) {
   try {
     await axios.put(`${API_PATH}/group-restaurant/${binding._id}`, {
       isActiveInOffice: !binding.isActiveInOffice,
-    });
+    })
 
-    binding.isActiveInOffice = !binding.isActiveInOffice;
-    toast.success('狀態已更新');
+    binding.isActiveInOffice = !binding.isActiveInOffice
+    toast.success('狀態已更新')
   } catch (err) {
-    console.error('切換辦公室餐廳狀態失敗:', err);
-    toast.error('狀態更新失敗');
+    console.error('切換辦公室餐廳狀態失敗:', err)
+    toast.error('狀態更新失敗')
   }
 }
 
 // 移除辦公室餐廳綁定
 async function removeOfficeRestaurant(bindingId) {
-  if (!confirm('確定要移除此餐廳綁定嗎？')) return;
+  if (!confirm('確定要移除此餐廳綁定嗎？')) return
 
   try {
-    await axios.delete(`${API_PATH}/group-restaurant/${bindingId}`);
+    await axios.delete(`${API_PATH}/group-restaurant/${bindingId}`)
 
     // 從清單中移除
-    officeRestaurants.value = officeRestaurants.value.filter((binding) => binding._id !== bindingId);
-    await fetchOfficeRestaurants();
+    officeRestaurants.value = officeRestaurants.value.filter((binding) => binding._id !== bindingId)
+    await fetchOfficeRestaurants()
 
-    toast.success('已移除綁定');
+    toast.success('已移除綁定')
   } catch (err) {
-    console.error('移除辦公室餐廳綁定失敗:', err);
-    toast.error('移除失敗');
+    console.error('移除辦公室餐廳綁定失敗:', err)
+    toast.error('移除失敗')
   }
 }
 
@@ -570,58 +570,58 @@ const editModal = reactive({
   isLoading: false,
   isSaving: false,
   imagesToDelete: [],
-});
+})
 
 async function openEditModal(restaurant) {
-  editModal.show = true;
-  editModal.isLoading = true;
-  editModal.imagesToDelete = []; // 重置待刪除列表
-  document.body.style.overflow = 'hidden';
+  editModal.show = true
+  editModal.isLoading = true
+  editModal.imagesToDelete = [] // 重置待刪除列表
+  document.body.style.overflow = 'hidden'
   try {
-    const { data } = await axios.get(`${API_PATH}/restaurant/${restaurant._id}?groupId=${groupId}`);
+    const { data } = await axios.get(`${API_PATH}/restaurant/${restaurant._id}?groupId=${groupId}`)
     // 使用深拷貝，避免直接修改列表中的資料
-    editModal.restaurant = JSON.parse(JSON.stringify(data));
+    editModal.restaurant = JSON.parse(JSON.stringify(data))
   } catch (error) {
-    toast.error('讀取餐廳資料失敗');
-    closeEditModal();
+    toast.error('讀取餐廳資料失敗')
+    closeEditModal()
   } finally {
-    editModal.isLoading = false;
+    editModal.isLoading = false
   }
 }
 
 function closeEditModal() {
-  editModal.show = false;
-  editModal.restaurant = null;
-  editModal.imagesToDelete = [];
-  document.body.style.overflow = 'auto';
+  editModal.show = false
+  editModal.restaurant = null
+  editModal.imagesToDelete = []
+  document.body.style.overflow = 'auto'
 }
 
 async function updateRestaurant() {
-  if (!editModal.restaurant) return;
-  editModal.isSaving = true;
+  if (!editModal.restaurant) return
+  editModal.isSaving = true
   try {
     const payload = {
       ...editModal.restaurant,
       groupId: groupId,
       imagesToDelete: editModal.imagesToDelete, // 加入待刪除圖片列表
-    };
-    await axios.put(`${API_PATH}/restaurant/${editModal.restaurant._id}`, payload);
-    toast.success('餐廳資料已更新！');
-    await fetchRestaurants(); // 重新載入列表以顯示更新
-    closeEditModal();
+    }
+    await axios.put(`${API_PATH}/restaurant/${editModal.restaurant._id}`, payload)
+    toast.success('餐廳資料已更新！')
+    await fetchRestaurants() // 重新載入列表以顯示更新
+    closeEditModal()
   } catch (error) {
-    toast.error('更新失敗');
-    console.error(error);
+    toast.error('更新失敗')
+    console.error(error)
   } finally {
-    editModal.isSaving = false;
+    editModal.isSaving = false
   }
 }
 
 function removeEditImage(index) {
   if (editModal.restaurant && editModal.restaurant.menu) {
-    const removedImage = editModal.restaurant.menu.splice(index, 1);
+    const removedImage = editModal.restaurant.menu.splice(index, 1)
     if (removedImage.length > 0) {
-      editModal.imagesToDelete.push(removedImage[0]);
+      editModal.imagesToDelete.push(removedImage[0])
     }
   }
 }
@@ -629,73 +629,73 @@ function removeEditImage(index) {
 // -------------------- 初始化 --------------------
 
 onMounted(() => {
-  fetchGroupSetting();
-  fetchRestaurants();
-  fetchOfficeRestaurants();
-});
+  fetchGroupSetting()
+  fetchRestaurants()
+  fetchOfficeRestaurants()
+})
 
-const expandedOffices = ref({});
+const expandedOffices = ref({})
 const allOfficesExpanded = computed(() => {
-  return Object.values(expandedOffices.value).every((expanded) => expanded);
-});
+  return Object.values(expandedOffices.value).every((expanded) => expanded)
+})
 
 // 圖片彈窗管理
 const imageModal = reactive({
   show: false,
   restaurant: null,
-});
+})
 
 // 初始化辦公室展開狀態
 const initializeOfficeStates = () => {
   groupSetting.officeOption.forEach((office) => {
     if (!(office in expandedOffices.value)) {
       if (groupSetting.currentOffice === office) {
-        expandedOffices.value[office] = true; // 預設展開
+        expandedOffices.value[office] = true // 預設展開
       } else {
-        expandedOffices.value[office] = false; // 預設關閉
+        expandedOffices.value[office] = false // 預設關閉
       }
     }
-  });
-};
+  })
+}
 
 // 切換單個辦公室展開狀態
 const toggleOffice = (office) => {
-  expandedOffices.value[office] = !expandedOffices.value[office];
-};
+  expandedOffices.value[office] = !expandedOffices.value[office]
+}
 
 // 切換所有辦公室展開狀態
 const toggleAllOffices = () => {
-  const shouldExpand = !allOfficesExpanded.value;
+  const shouldExpand = !allOfficesExpanded.value
   groupSetting.officeOption.forEach((office) => {
-    expandedOffices.value[office] = shouldExpand;
-  });
-};
+    expandedOffices.value[office] = shouldExpand
+  })
+}
 
 // 打開圖片彈窗
 const openImageModal = (restaurant) => {
-  imageModal.restaurant = restaurant;
-  imageModal.show = true;
-  document.body.style.overflow = 'hidden'; // 防止背景滾動
-};
+  imageModal.restaurant = restaurant
+  imageModal.show = true
+  document.body.style.overflow = 'hidden' // 防止背景滾動
+}
 
 // 關閉圖片彈窗
 const closeImageModal = () => {
-  imageModal.show = false;
-  imageModal.restaurant = null;
-  document.body.style.overflow = 'auto';
-};
+  imageModal.show = false
+  imageModal.restaurant = null
+  document.body.style.overflow = 'auto'
+}
 
 // 在組件掛載時初始化
 onMounted(() => {
-  initializeOfficeStates();
-});
+  initializeOfficeStates()
+})
 
 // 監聽辦公室選項變化
 watch(
   () => groupSetting.officeOption,
   () => {
-    initializeOfficeStates();
+    initializeOfficeStates()
   },
   { deep: true },
-);
+)
 </script>
