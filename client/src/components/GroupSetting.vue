@@ -151,6 +151,9 @@
                         <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
                       </svg>
                     </div>
+                    <button @click="openEditModal(r)" class="w-7 h-7 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors duration-200 shadow-sm" aria-label="編輯餐廳">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
+                    </button>
                     <button @click="deleteRestaurant(r._id)" class="w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 shadow-sm cursor-pointer" aria-label="刪除餐廳">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -175,6 +178,9 @@
                           <path d="M7 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM7 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 8a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM13 14a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
                         </svg>
                       </div>
+                      <button @click="openEditModal(r)" class="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors duration-200 shadow-sm" aria-label="編輯餐廳">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg>
+                      </button>
                       <button @click="deleteRestaurant(r._id)" class="w-6 h-6 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200 shadow-sm cursor-pointer" aria-label="刪除餐廳">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -379,6 +385,64 @@
               <div class="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-sm">{{ index + 1 }} / {{ imageModal.restaurant?.menu?.length }}</div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 編輯餐廳 Modal -->
+    <div v-if="editModal.show" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" @click="closeEditModal">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col" @click.stop>
+        <div class="flex items-center justify-between p-5 border-b border-gray-200">
+          <h3 class="text-2xl font-bold text-amber-800">編輯餐廳</h3>
+          <button @click="closeEditModal" class="text-gray-400 hover:text-gray-600 p-1 rounded-full transition-colors">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-5 overflow-y-auto">
+          <div v-if="editModal.isLoading" class="text-center py-10">載入中...</div>
+          <form v-else-if="editModal.restaurant" @submit.prevent="updateRestaurant">
+            <div>
+              <label for="edit-name" class="block text-sm font-medium text-amber-800 mb-1">餐廳名稱 (必填)</label>
+              <input id="edit-name" v-model="editModal.restaurant.name" type="text" required class="w-full border p-2 rounded-lg text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
+            </div>
+            <div>
+              <label for="edit-address" class="block text-sm font-medium text-amber-800 mb-1">地址</label>
+              <input id="edit-address" v-model="editModal.restaurant.address" type="text" class="w-full border p-2 rounded-lg text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
+            </div>
+            <div>
+              <label for="edit-phone" class="block text-sm font-medium text-amber-800 mb-1">電話</label>
+              <input id="edit-phone" v-model="editModal.restaurant.phone" type="text" class="w-full border p-2 rounded-lg text-amber-900 border-amber-300 placeholder-amber-600 focus:ring-2 focus:ring-amber-500 focus:border-transparent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-amber-800 mb-1">啟用狀態</label>
+              <label class="inline-flex items-center cursor-pointer">
+                <input type="checkbox" v-model="editModal.restaurant.isActive" class="sr-only peer" />
+                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+                <span class="ms-3 text-base font-medium text-amber-700">{{ editModal.restaurant.isActive ? '已啟用' : '未啟用' }}</span>
+              </label>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-amber-800 mb-2">菜單圖片管理</h4>
+              <div v-if="editModal.restaurant.menu && editModal.restaurant.menu.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div v-for="(image, index) in editModal.restaurant.menu" :key="index" class="relative group">
+                  <img :src="image" alt="Menu Image" class="w-full h-28 object-cover rounded-lg border border-amber-200 shadow-sm" />
+                  <button @click.prevent="removeEditImage(index)" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700 transition-transform transform group-hover:scale-110" title="移除圖片">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+              </div>
+              <p v-else class="text-sm text-amber-600 bg-amber-50 p-3 rounded-lg">目前沒有菜單圖片。</p>
+              <p class="text-xs text-gray-500 mt-2">注意：此處僅能移除現有圖片，如需新增圖片，請刪除此餐廳後重新建立。</p>
+            </div>
+          </form>
+        </div>
+
+        <div class="flex justify-end gap-4 p-5 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+          <button @click="closeEditModal" class="px-5 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-200">取消</button>
+          <button @click="updateRestaurant" :disabled="editModal.isSaving" class="px-5 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200">
+            {{ editModal.isSaving ? '儲存中...' : '儲存變更' }}
+          </button>
         </div>
       </div>
     </div>
@@ -716,6 +780,62 @@ async function removeOfficeRestaurant(bindingId) {
   } catch (err) {
     console.error('移除辦公室餐廳綁定失敗:', err);
     toast.error('移除失敗');
+  }
+}
+
+// -------------------- 編輯 Modal 功能 --------------------
+const editModal = reactive({
+  show: false,
+  restaurant: null,
+  isLoading: false,
+  isSaving: false,
+});
+
+async function openEditModal(restaurant) {
+  editModal.show = true;
+  editModal.isLoading = true;
+  document.body.style.overflow = 'hidden';
+  try {
+    const { data } = await axios.get(`${API_PATH}/restaurant/${restaurant._id}?groupId=${groupId}`);
+    // 使用深拷貝，避免直接修改列表中的資料
+    editModal.restaurant = JSON.parse(JSON.stringify(data));
+  } catch (error) {
+    toast.error('讀取餐廳資料失敗');
+    closeEditModal();
+  } finally {
+    editModal.isLoading = false;
+  }
+}
+
+function closeEditModal() {
+  editModal.show = false;
+  editModal.restaurant = null;
+  document.body.style.overflow = 'auto';
+}
+
+async function updateRestaurant() {
+  if (!editModal.restaurant) return;
+  editModal.isSaving = true;
+  try {
+    const payload = {
+      ...editModal.restaurant,
+      groupId: groupId,
+    };
+    await axios.put(`${API_PATH}/restaurant/${editModal.restaurant._id}`, payload);
+    toast.success('餐廳資料已更新！');
+    await fetchRestaurants(); // 重新載入列表以顯示更新
+    closeEditModal();
+  } catch (error) {
+    toast.error('更新失敗');
+    console.error(error);
+  } finally {
+    editModal.isSaving = false;
+  }
+}
+
+function removeEditImage(index) {
+  if (editModal.restaurant && editModal.restaurant.menu) {
+    editModal.restaurant.menu.splice(index, 1);
   }
 }
 

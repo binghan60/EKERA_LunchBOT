@@ -14,7 +14,7 @@ router.get('/:id', async (req, res) => {
   try {
     const groupSetting = await GroupSetting.findOne({ groupId });
     if (!groupSetting) {
-      return res.status(404).send('找��到該群組設定');
+      return res.status(404).send('找不到該群組設定');
     }
     res.status(200).json(groupSetting);
   } catch (err) {
