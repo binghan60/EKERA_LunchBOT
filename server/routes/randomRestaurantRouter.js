@@ -175,15 +175,16 @@ router.get('/', async (req, res) => {
     const notificationGroups = await GroupSetting.find({ lunchNotification: true }).select('groupId -_id');
     res.status(200).json({ message: '成功獲取通知群組', data: notificationGroups });
   } catch (error) {
-    console.error('Error fetching notification group:', error);
+    const errorMessage = '獲取推播群組時發生錯誤';
+    console.error(errorMessage, error);
+    await sendErrorEmail(errorMessage, error.stack || error);
     return res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
   }
 });
 
 router.post('/', async (req, res) => {
+  const { groupId } = req.body;
   try {
-    const { groupId } = req.body;
-
     if (!groupId) {
       return res.status(400).json({ message: '請求主體 (Request body) 中缺少 groupId' });
     }
@@ -215,7 +216,9 @@ router.post('/', async (req, res) => {
           linePushResponse: lineResponse.data,
         });
       } catch (lineError) {
-        console.error('LINE push failed:', lineError.response ? lineError.response.data : lineError.message);
+        const errorMessage = `LINE 推播失敗，群組ID: ${groupId}`;
+        console.error(errorMessage, lineError.response ? lineError.response.data : lineError.message);
+        await sendErrorEmail(errorMessage, lineError.stack || lineError);
         return res.status(500).json({
           message: '成功抽取餐廳，但 LINE 推播失敗。',
           restaurantName: restaurant.name,
@@ -228,9 +231,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: `沒有可以抽的餐廳，請先新增餐廳，並綁定至辦公室清單！\n👉 ${clientUrl}/?groupId=${groupId}` });
     }
   } catch (error) {
-    console.error('Server error caught in router:', error);
-    await sendErrorEmail('🤖 每日午餐推播失敗了', error);
-
+    const errorMessage = `每日午餐推播失敗，群組ID: ${groupId}`;
+    console.error(errorMessage, error);
+    await sendErrorEmail(errorMessage, error.stack || error);
     res.status(500).json({ message: '伺服器內部錯誤', error: error.message });
   }
 });

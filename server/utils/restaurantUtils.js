@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import GroupRestaurant from '../models/GroupRestaurant.js';
 import Restaurant from '../models/Restaurant.js';
 import axios from 'axios';
+import sendErrorEmail from './sendEmail.js';
 
 export async function drawRestaurant(groupId, office) {
   try {
@@ -34,7 +35,9 @@ export async function drawRestaurant(groupId, office) {
     }
     return null;
   } catch (error) {
-    console.error('Error in drawRestaurant:', error);
+    const errorMessage = '函式 drawRestaurant 發生錯誤';
+    console.error(errorMessage, error);
+    await sendErrorEmail(errorMessage, error.stack || error);
     throw error;
   }
 }
@@ -74,225 +77,246 @@ const WineDateTheme = {
 };
 
 export function createRestaurantFlexMessage(restaurant, options = {}) {
-  const randomTheme = ThemeList[Math.floor(Math.random() * ThemeList.length)];
+  try {
+    const randomTheme = ThemeList[Math.floor(Math.random() * ThemeList.length)];
 
-  const { title = '🎊 午餐轉盤結果 🎊', defaultImage = 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg', showMapButton = true, showPhoneButton = true, theme = randomTheme } = options;
+    const {
+      title = '🎊 午餐轉盤結果 🎊',
+      defaultImage = 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg',
+      showMapButton = true,
+      showPhoneButton = true,
+      theme = randomTheme,
+    } = options;
 
-  const restaurantName = restaurant.name || '神秘究極料理';
-  const displayAddress = restaurant?.address || '深山秘境，地址不明';
-  const mapAddress = restaurant.address;
-  const restaurantPhone = restaurant?.phone || '無人接聽，考驗默契';
-  const restaurantImage = restaurant?.menu?.[0] || defaultImage;
+    const restaurantName = restaurant.name || '神秘究極料理';
+    const displayAddress = restaurant?.address || '深山秘境，地址不明';
+    const mapAddress = restaurant.address;
+    const restaurantPhone = restaurant?.phone || '無人接聽，考驗默契';
+    const restaurantImage = restaurant?.menu?.[0] || defaultImage;
 
-  const footerButtons = [];
+    const footerButtons = [];
 
-  if (showMapButton && mapAddress && typeof mapAddress === 'string' && mapAddress.trim() !== '') {
-    footerButtons.push({
-      type: 'button',
-      style: 'primary',
-      color: theme.primaryBtn,
-      height: 'sm',
-      action: {
-        type: 'uri',
-        label: '導航去吃！',
-        uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapAddress)}`,
-      },
-    });
-  }
-
-  if (showPhoneButton && restaurantPhone && typeof restaurantPhone === 'string' && /^[0-9+()\-\s]+$/.test(restaurantPhone.trim())) {
-    footerButtons.push({
-      type: 'button',
-      style: 'secondary',
-      color: theme.secondaryBtn,
-      height: 'sm',
-      action: {
-        type: 'uri',
-        label: '馬上CALL！',
-        uri: `tel:${restaurantPhone.trim()}`,
-      },
-    });
-  }
-
-  const flexContent = {
-    type: 'bubble',
-    size: 'giga',
-    header: {
-      type: 'box',
-      layout: 'vertical',
-      contents: [
-        {
-          type: 'text',
-          text: title,
-          weight: 'bold',
-          size: 'lg',
-          color: '#FFEEDB',
-          align: 'center',
+    if (showMapButton && mapAddress && typeof mapAddress === 'string' && mapAddress.trim() !== '') {
+      footerButtons.push({
+        type: 'button',
+        style: 'primary',
+        color: theme.primaryBtn,
+        height: 'sm',
+        action: {
+          type: 'uri',
+          label: '導航去吃！',
+          uri: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapAddress)}`,
         },
-      ],
-      paddingAll: 'lg',
-    },
-    hero: {
-      type: 'image',
-      url: restaurantImage,
-      size: 'full',
-      aspectRatio: '20:13',
-      aspectMode: 'cover',
-      action: {
-        type: 'uri',
-        label: '查看大圖',
-        uri: restaurantImage,
-      },
-    },
-    body: {
-      type: 'box',
-      layout: 'vertical',
-      spacing: 'md',
-      contents: [
-        {
-          type: 'text',
-          text: '🎯 就決定是你了...',
-          size: 'sm',
-          color: theme.subText,
-          align: 'center',
+      });
+    }
+
+    if (showPhoneButton && restaurantPhone && typeof restaurantPhone === 'string' && /^[0-9+()\-\s]+$/.test(restaurantPhone.trim())) {
+      footerButtons.push({
+        type: 'button',
+        style: 'secondary',
+        color: theme.secondaryBtn,
+        height: 'sm',
+        action: {
+          type: 'uri',
+          label: '馬上CALL！',
+          uri: `tel:${restaurantPhone.trim()}`,
         },
-        {
-          type: 'text',
-          text: restaurantName,
-          weight: 'bold',
-          size: 'xxl',
-          color: theme.titleText,
-          align: 'center',
-        },
-        {
-          type: 'separator',
-          margin: 'lg',
-          color: '#E6D5C0',
-        },
-        {
-          type: 'box',
-          layout: 'vertical',
-          margin: 'lg',
-          spacing: 'sm',
-          contents: [
-            {
-              type: 'box',
-              layout: 'baseline',
-              spacing: 'sm',
-              contents: [
-                {
-                  type: 'icon',
-                  url: 'https://cdn-icons-png.flaticon.com/512/3220/3220164.png',
-                  size: 'sm',
-                },
-                {
-                  type: 'text',
-                  text: '地址：',
-                  color: '#888888',
-                  size: 'sm',
-                  flex: 1,
-                },
-                {
-                  type: 'text',
-                  text: displayAddress,
-                  wrap: true,
-                  color: '#444444',
-                  size: 'sm',
-                  flex: 5,
-                },
-              ],
-            },
-            {
-              type: 'box',
-              layout: 'baseline',
-              spacing: 'sm',
-              contents: [
-                {
-                  type: 'icon',
-                  url: 'https://cdn-icons-png.flaticon.com/512/3059/3059502.png',
-                  size: 'sm',
-                },
-                {
-                  type: 'text',
-                  text: '電話：',
-                  color: '#888888',
-                  size: 'sm',
-                  flex: 1,
-                },
-                {
-                  type: 'text',
-                  text: restaurantPhone,
-                  wrap: true,
-                  color: '#444444',
-                  size: 'sm',
-                  flex: 5,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-    footer: {
-      type: 'box',
-      layout: footerButtons.length === 2 ? 'horizontal' : 'vertical',
-      spacing: 'sm',
-      contents:
-        footerButtons.length > 0
-          ? footerButtons
-          : [
-              {
-                type: 'text',
-                text: title,
-                color: theme.header,
-                size: 'sm',
-                align: 'center',
-                weight: 'bold',
-              },
-            ],
-      paddingAll: 'md',
-      flex: 0,
-    },
-    styles: {
+      });
+    }
+
+    const flexContent = {
+      type: 'bubble',
+      size: 'giga',
       header: {
-        backgroundColor: theme.header,
+        type: 'box',
+        layout: 'vertical',
+        contents: [
+          {
+            type: 'text',
+            text: title,
+            weight: 'bold',
+            size: 'lg',
+            color: '#FFEEDB',
+            align: 'center',
+          },
+        ],
+        paddingAll: 'lg',
+      },
+      hero: {
+        type: 'image',
+        url: restaurantImage,
+        size: 'full',
+        aspectRatio: '20:13',
+        aspectMode: 'cover',
+        action: {
+          type: 'uri',
+          label: '查看大圖',
+          uri: restaurantImage,
+        },
       },
       body: {
-        backgroundColor: theme.body,
+        type: 'box',
+        layout: 'vertical',
+        spacing: 'md',
+        contents: [
+          {
+            type: 'text',
+            text: '🎯 就決定是你了...',
+            size: 'sm',
+            color: theme.subText,
+            align: 'center',
+          },
+          {
+            type: 'text',
+            text: restaurantName,
+            weight: 'bold',
+            size: 'xxl',
+            color: theme.titleText,
+            align: 'center',
+          },
+          {
+            type: 'separator',
+            margin: 'lg',
+            color: '#E6D5C0',
+          },
+          {
+            type: 'box',
+            layout: 'vertical',
+            margin: 'lg',
+            spacing: 'sm',
+            contents: [
+              {
+                type: 'box',
+                layout: 'baseline',
+                spacing: 'sm',
+                contents: [
+                  {
+                    type: 'icon',
+                    url: 'https://cdn-icons-png.flaticon.com/512/3220/3220164.png',
+                    size: 'sm',
+                  },
+                  {
+                    type: 'text',
+                    text: '地址：',
+                    color: '#888888',
+                    size: 'sm',
+                    flex: 1,
+                  },
+                  {
+                    type: 'text',
+                    text: displayAddress,
+                    wrap: true,
+                    color: '#444444',
+                    size: 'sm',
+                    flex: 5,
+                  },
+                ],
+              },
+              {
+                type: 'box',
+                layout: 'baseline',
+                spacing: 'sm',
+                contents: [
+                  {
+                    type: 'icon',
+                    url: 'https://cdn-icons-png.flaticon.com/512/3059/3059502.png',
+                    size: 'sm',
+                  },
+                  {
+                    type: 'text',
+                    text: '電話：',
+                    color: '#888888',
+                    size: 'sm',
+                    flex: 1,
+                  },
+                  {
+                    type: 'text',
+                    text: restaurantPhone,
+                    wrap: true,
+                    color: '#444444',
+                    size: 'sm',
+                    flex: 5,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       },
       footer: {
-        backgroundColor: theme.footer,
+        type: 'box',
+        layout: footerButtons.length === 2 ? 'horizontal' : 'vertical',
+        spacing: 'sm',
+        contents:
+          footerButtons.length > 0
+            ? footerButtons
+            : [
+                {
+                  type: 'text',
+                  text: title,
+                  color: theme.header,
+                  size: 'sm',
+                  align: 'center',
+                  weight: 'bold',
+                },
+              ],
+        paddingAll: 'md',
+        flex: 0,
       },
-    },
-  };
+      styles: {
+        header: {
+          backgroundColor: theme.header,
+        },
+        body: {
+          backgroundColor: theme.body,
+        },
+        footer: {
+          backgroundColor: theme.footer,
+        },
+      },
+    };
 
-  return {
-    type: 'flex',
-    altText: `今日午餐：${restaurantName}`,
-    contents: flexContent,
-  };
+    return {
+      type: 'flex',
+      altText: `今日午餐：${restaurantName}`,
+      contents: flexContent,
+    };
+  } catch (error) {
+    const errorMessage = '函式 createRestaurantFlexMessage 發生錯誤';
+    console.error(errorMessage, error);
+    await sendErrorEmail(errorMessage, error.stack || error);
+    throw error;
+  }
 }
 
 const LINE_CHANNEL_ACCESS_TOKEN = process.env.CHANNEL_ACCESS_TOKEN; // 從環境變數讀取
 const LINE_PUSH_API_URL = 'https://api.line.me/v2/bot/message/push';
 
 export async function sendLineMessage(toGroupId, message) {
-  if (!LINE_CHANNEL_ACCESS_TOKEN) {
-    console.error('LINE_CHANNEL_ACCESS_TOKEN is not defined. Please check environment variables.');
-    throw new Error('LINE Channel Access Token is missing.');
+  try {
+    if (!LINE_CHANNEL_ACCESS_TOKEN) {
+      const errorMessage = '缺少 LINE Channel Access Token，請檢查環境變數。';
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+
+    const payload = {
+      to: toGroupId,
+      messages: [message],
+    };
+
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+      },
+    };
+
+    return await axios.post(LINE_PUSH_API_URL, payload, config);
+  } catch (error) {
+    const errorMessage = '函式 sendLineMessage 發生錯誤';
+    console.error(errorMessage, error);
+    await sendErrorEmail(errorMessage, error.stack || error);
+    throw error;
   }
-
-  const payload = {
-    to: toGroupId,
-    messages: [message],
-  };
-
-  const config = {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
-    },
-  };
-
-  return axios.post(LINE_PUSH_API_URL, payload, config);
 }
