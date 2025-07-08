@@ -76,17 +76,11 @@ const WineDateTheme = {
   subText: '#998D95',
 };
 
-export function createRestaurantFlexMessage(restaurant, options = {}) {
+export async function createRestaurantFlexMessage(restaurant, options = {}) {
   try {
     const randomTheme = ThemeList[Math.floor(Math.random() * ThemeList.length)];
 
-    const {
-      title = '🎊 午餐轉盤結果 🎊',
-      defaultImage = 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg',
-      showMapButton = true,
-      showPhoneButton = true,
-      theme = randomTheme,
-    } = options;
+    const { title = '🎊 午餐轉盤結果 🎊', defaultImage = 'https://res.cloudinary.com/dtxauiukh/image/upload/w_1000,ar_1:1,c_fill,g_auto,e_art:hokusai/v1747128923/20240430184650-c091c8f9_jogmqt.jpg', showMapButton = true, showPhoneButton = true, theme = randomTheme } = options;
 
     const restaurantName = restaurant.name || '神秘究極料理';
     const displayAddress = restaurant?.address || '深山秘境，地址不明';
