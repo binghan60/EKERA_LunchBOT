@@ -138,7 +138,7 @@ async function handleTextMessage(event, groupId, client) {
       }
 
       // 使用 Flex Message 顯示抽獎結果
-      const flexMessage = createRestaurantFlexMessage(restaurant);
+      const flexMessage = await createRestaurantFlexMessage(restaurant);
       await client.replyMessage(event.replyToken, flexMessage);
     } catch (err) {
       console.error('抽獎失敗：', err);

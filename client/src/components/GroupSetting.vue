@@ -385,7 +385,6 @@ const editModal = reactive({
 
 async function openEditModal(restaurant) {
   isLoading.value = true
-  editModal.show = true
   editModal.imagesToDelete = [] // 重置待刪除列表
   editModal.editMenuFiles = [] // 重置新上傳檔案
   editModal.editMenuPreviews = [] // 重置新上傳預覽
@@ -394,6 +393,7 @@ async function openEditModal(restaurant) {
     const { data } = await axios.get(`${API_PATH}/restaurant/${restaurant._id}?groupId=${groupId}`)
     // 使用深拷貝，避免直接修改列表中的資料
     editModal.restaurant = JSON.parse(JSON.stringify(data))
+    editModal.show = true
   } catch (error) {
     toast.error('讀取餐廳資料失敗')
     closeEditModal()
@@ -628,8 +628,8 @@ watch(
                     </div>
                   </div>
                   <div class="flex items-center gap-2 self-end sm:self-center">
-                    <button @click="openEditModal(r)" class="w-9 h-9 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 transition shadow" aria-label="編輯"><i class="fa-solid fa-pencil"></i></button>
-                    <button @click="deleteRestaurant(r._id)" class="w-9 h-9 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
+                    <button @click="openEditModal(r)" class="w-7 h-7 flex items-center justify-center bg-blue-500 text-white rounded-full hover:bg-blue-600 transition shadow" aria-label="編輯"><i class="fa-solid fa-pencil"></i></button>
+                    <button @click="deleteRestaurant(r._id)" class="w-7 h-7 flex items-center justify-center bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow" aria-label="刪除"><i class="fa-solid fa-trash"></i></button>
                   </div>
                 </div>
               </div>
