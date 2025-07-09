@@ -205,7 +205,7 @@ router.post('/', async (req, res) => {
     const restaurant = await drawRestaurant(groupId, currentOffice);
     if (restaurant && restaurant.name) {
       // 成功抽取到餐廳，建立 FlexMessage
-      const flexMessage = createRestaurantFlexMessage(restaurant);
+      const flexMessage = await createRestaurantFlexMessage(restaurant);
       try {
         // 推播訊息
         const lineResponse = await sendLineMessage(targetGroupId, flexMessage);
