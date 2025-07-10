@@ -13,6 +13,8 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.7",
     "axios": "^1.9.0",
+    "highcharts": "^12.3.0",
+    "highcharts-vue": "^2.0.1",
     "pinia": "^3.0.1",
     "tailwindcss": "^4.1.7",
     "vue": "^3.5.13",
