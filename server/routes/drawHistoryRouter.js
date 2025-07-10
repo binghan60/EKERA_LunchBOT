@@ -75,21 +75,19 @@ router.get('/', async (req, res) => {
     if (startDate || endDate) {
       matchCondition.drawnAt = {};
       if (startDate) {
-        matchCondition.drawnAt.$gte = new Date(startDate);
+        const startUTC = new Date(startDate + 'T00:00:00.000Z');
+        matchCondition.drawnAt.$gte = startUTC;
       }
       if (endDate) {
-        const endOfDay = new Date(endDate);
-        endOfDay.setHours(23, 59, 59, 999);
-        matchCondition.drawnAt.$lte = endOfDay;
+        const endUTC = new Date(endDate + 'T23:59:59.999Z');
+        matchCondition.drawnAt.$lte = endUTC;
       }
     }
 
     // 平行執行兩個查詢
     const [history, statistics] = await Promise.all([
       // 查詢一：獲取詳細歷史紀錄
-      DrawHistory.find(matchCondition)
-        .populate('restaurantId', 'name url image')
-        .sort({ drawnAt: -1 }),
+      DrawHistory.find(matchCondition).populate('restaurantId', 'name').sort({ drawnAt: -1 }),
 
       // 查詢二：使用 Aggregation 進行統計
       DrawHistory.aggregate([
