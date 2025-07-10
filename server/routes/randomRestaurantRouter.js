@@ -2,6 +2,7 @@ import express from 'express';
 const router = express.Router();
 import axios from 'axios';
 import GroupSetting from '../models/GroupSetting.js';
+import DrawHistory from '../models/DrawHistory.js';
 import { drawRestaurant, createRestaurantFlexMessage, sendLineMessage } from '../utils/restaurantUtils.js';
 import sendErrorEmail from '../utils/sendEmail.js';
 
@@ -209,6 +210,14 @@ router.post('/', async (req, res) => {
       try {
         // 推播訊息
         const lineResponse = await sendLineMessage(targetGroupId, flexMessage);
+
+        // 成功推播後，儲存抽籤歷史
+        const newHistory = new DrawHistory({
+          restaurantId: restaurant._id,
+          groupId: groupId,
+        });
+        await newHistory.save();
+
         return res.status(200).json({
           message: '餐廳已抽取並成功推播 LINE 訊息。',
           restaurantName: restaurant.name,
