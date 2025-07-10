@@ -211,12 +211,27 @@ router.post('/', async (req, res) => {
         // 推播訊息
         const lineResponse = await sendLineMessage(targetGroupId, flexMessage);
 
-        // 成功推播後，儲存抽籤歷史
-        const newHistory = new DrawHistory({
-          restaurantId: restaurant._id,
-          groupId: groupId,
-        });
-        await newHistory.save();
+        // 成功推播後，儲存或更新當日的抽籤歷史
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        await DrawHistory.findOneAndUpdate(
+          {
+            groupId: groupId,
+            drawnAt: { $gte: startOfDay, $lte: endOfDay },
+          },
+          {
+            restaurantId: restaurant._id,
+            groupId: groupId,
+            drawnAt: new Date(),
+          },
+          {
+            upsert: true, // 如果找不到符合條件的紀錄，就新增一筆
+            new: true, // 回傳更新後的文檔
+          }
+        );
 
         return res.status(200).json({
           message: '餐廳已抽取並成功推播 LINE 訊息。',
