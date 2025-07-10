@@ -105,6 +105,9 @@ export async function createRestaurantFlexMessage(restaurant, options = {}) {
     }
 
     if (showPhoneButton && restaurantPhone && typeof restaurantPhone === 'string' && /^[0-9+()\-\s]+$/.test(restaurantPhone.trim())) {
+      // 清理電話號碼：移除所有空格，保留數字、+、()、-
+      const cleanPhone = restaurantPhone.trim().replace(/\s+/g, '');
+
       footerButtons.push({
         type: 'button',
         style: 'secondary',
@@ -113,7 +116,7 @@ export async function createRestaurantFlexMessage(restaurant, options = {}) {
         action: {
           type: 'uri',
           label: '馬上CALL！',
-          uri: `tel:${restaurantPhone.trim()}`,
+          uri: `tel:${cleanPhone}`,
         },
       });
     }
