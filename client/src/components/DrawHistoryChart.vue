@@ -1,13 +1,13 @@
 <template>
-  <div class="draw-history-chart">
-    <h2>抽獎歷史分布</h2>
-    <div class="time-range-selector">
-      <button @click="fetchChartData('week')" :class="{ active: timeRange === 'week' }">最近一周</button>
-      <button @click="fetchChartData('month')" :class="{ active: timeRange === 'month' }">最近一個月</button>
+  <div class="p-5 border border-gray-200 rounded-lg bg-white shadow-md">
+    <h2 class="text-xl font-bold mb-4 text-gray-800">抽獎歷史分布</h2>
+    <div class="mb-4 flex flex-col space-y-2 md:flex-row md:space-x-2 md:space-y-0">
+      <button @click="fetchChartData('week')" :class="{ '!bg-blue-600 !text-white !border-blue-600 hover:!bg-blue-700': timeRange === 'week' }" class="px-4 py-2 border border-gray-300 bg-gray-50 cursor-pointer rounded-md transition-all duration-200 text-sm text-gray-700 hover:bg-gray-100">最近一周</button>
+      <button @click="fetchChartData('month')" :class="{ '!bg-blue-600 !text-white !border-blue-600 hover:!bg-blue-700': timeRange === 'month' }" class="px-4 py-2 border border-gray-300 bg-gray-50 cursor-pointer rounded-md transition-all duration-200 text-sm text-gray-700 hover:bg-gray-100">最近一個月</button>
     </div>
-    <div v-if="loading" class="loading-spinner">載入中...</div>
-    <div v-else-if="errorState" class="error-message">{{ errorState }}</div>
-    <div v-else-if="noData" class="no-data">此區間內沒有抽獎紀錄</div>
+    <div v-if="loading" class="text-center py-10 text-gray-500 text-base">載入中...</div>
+    <div v-else-if="errorState" class="text-red-700 bg-red-100 border border-red-300 rounded-md p-4 my-2 text-center text-base">{{ errorState }}</div>
+    <div v-else-if="noData" class="text-center py-10 text-gray-500 text-base">此區間內沒有抽獎紀錄</div>
     <!-- 修正：使用正確的組件名稱 -->
     <Chart v-if="chartOptions" :options="chartOptions"></Chart>
   </div>
@@ -182,94 +182,3 @@ watch(() => props.groupId, (newGroupId) => {
 }, { immediate: true });
 
 </script>
-
-<style scoped>
-.draw-history-chart {
-  padding: 20px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  margin-top: 20px;
-  background-color: #fff;
-}
-
-.time-range-selector {
-  margin-bottom: 15px;
-  display: flex;
-  gap: 10px;
-}
-
-.time-range-selector button {
-  padding: 8px 16px;
-  border: 1px solid #ccc;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  font-size: 14px;
-}
-
-.time-range-selector button:hover {
-  background-color: #e9ecef;
-}
-
-.time-range-selector button.active {
-  background-color: #007bff;
-  color: white;
-  border-color: #007bff;
-}
-
-.loading-spinner, .no-data, .error-message {
-  text-align: center;
-  padding: 40px;
-  color: #888;
-  font-size: 16px;
-}
-
-.error-message {
-  color: #dc3545;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  border-radius: 4px;
-  padding: 15px;
-  margin: 10px 0;
-}
-
-.loading-spinner {
-  position: relative;
-}
-
-.loading-spinner::after {
-  content: '';
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  margin: auto;
-  border: 2px solid transparent;
-  border-top: 2px solid #007bff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-@keyframes spin {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-
-/* 響應式設計 */
-@media (max-width: 768px) {
-  .draw-history-chart {
-    padding: 15px;
-  }
-  
-  .time-range-selector {
-    flex-direction: column;
-  }
-  
-  .time-range-selector button {
-    width: 100%;
-  }
-}
-</style>
