@@ -7,7 +7,7 @@ const router = express.Router();
  * @swagger
  * tags:
  *   name: DrawHistory
- *   description: 查詢抽籤歷史紀錄
+ *   description: 查詢抽籤歷史紀錄與統計
  */
 
 /**
@@ -15,8 +15,8 @@ const router = express.Router();
  * /history:
  *   get:
  *     tags: [DrawHistory]
- *     summary: 根據群組 ID 和日期區間查詢抽籤歷史
- *     description: 查詢指定群組的午餐抽籤歷史紀錄。可選填 startDate 和 endDate 來篩選特定時間範圍內的資料。
+ *     summary: 根據群組 ID 和日期區間查詢抽籤歷史與統計
+ *     description: 查詢指定群組的午餐抽籤歷史紀錄，並回傳一份統計資料，顯示在指定日期區間內每家餐廳被抽中的次數。
  *     parameters:
  *       - in: query
  *         name: groupId
@@ -38,32 +38,25 @@ const router = express.Router();
  *         description: 查詢區間的結束日期 (YYYY-MM-DD)
  *     responses:
  *       200:
- *         description: 成功獲取抽籤歷史
+ *         description: 成功獲取抽籤歷史與統計資料
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   _id:
- *                     type: string
- *                   restaurantId:
+ *               type: object
+ *               properties:
+ *                 history:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 statistics:
+ *                   type: array
+ *                   items:
  *                     type: object
  *                     properties:
- *                       _id:
+ *                       restaurantName:
  *                         type: string
- *                       name:
- *                         type: string
- *                       url:
- *                         type: string
- *                       image:
- *                         type: string
- *                   groupId:
- *                     type: string
- *                   drawnAt:
- *                     type: string
- *                     format: date-time
+ *                       count:
+ *                         type: integer
  *       400:
  *         description: 未提供 groupId
  *       500:
@@ -77,25 +70,52 @@ router.get('/', async (req, res) => {
   }
 
   try {
-    const query = { groupId };
+    const matchCondition = { groupId };
 
     if (startDate || endDate) {
-      query.drawnAt = {};
+      matchCondition.drawnAt = {};
       if (startDate) {
-        query.drawnAt.$gte = new Date(startDate);
+        matchCondition.drawnAt.$gte = new Date(startDate);
       }
       if (endDate) {
         const endOfDay = new Date(endDate);
         endOfDay.setHours(23, 59, 59, 999);
-        query.drawnAt.$lte = endOfDay;
+        matchCondition.drawnAt.$lte = endOfDay;
       }
     }
 
-    const history = await DrawHistory.find(query)
-      .populate('restaurantId', 'name url image') // 只選擇需要的餐廳欄位
-      .sort({ drawnAt: -1 }); // 按時間倒序
+    // 平行執行兩個查詢
+    const [history, statistics] = await Promise.all([
+      // 查詢一：獲取詳細歷史紀錄
+      DrawHistory.find(matchCondition)
+        .populate('restaurantId', 'name url image')
+        .sort({ drawnAt: -1 }),
 
-    res.status(200).json(history);
+      // 查詢二：使用 Aggregation 進行統計
+      DrawHistory.aggregate([
+        { $match: matchCondition },
+        { $group: { _id: '$restaurantId', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        {
+          $lookup: {
+            from: 'restaurants',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'restaurantDetails',
+          },
+        },
+        { $unwind: '$restaurantDetails' },
+        {
+          $project: {
+            _id: 0,
+            restaurantName: '$restaurantDetails.name',
+            count: '$count',
+          },
+        },
+      ]),
+    ]);
+
+    res.status(200).json({ history, statistics });
   } catch (error) {
     console.error('查詢抽籤歷史時發生錯誤:', error);
     res.status(500).json({ message: '伺服器內部錯誤' });
