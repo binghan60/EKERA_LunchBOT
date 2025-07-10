@@ -837,5 +837,5 @@ watch(
       </div>
     </div>
   </div>
-  <VueLoading v-model:active="isLoading" :is-full-page="true" />
+  <VueLoading v-model:active="isLoading" :is-full-page="true" color="#D97706" />
 </template>
