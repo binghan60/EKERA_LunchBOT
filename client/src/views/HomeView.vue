@@ -17,11 +17,3 @@ const groupId = route.query.groupId
     <p>您可以從 LINE Bot 的「建立群組」或「群組設定」按鈕進入此頁面。</p>
   </div>
 </template>
-
-<style scoped>
-main {
-  display: flex;
-  flex-direction: column;
-  gap: 20px; /* Add some space between components */
-}
-</style>
