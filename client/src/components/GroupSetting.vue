@@ -420,7 +420,6 @@ async function updateRestaurant() {
     formData.append('name', editModal.restaurant.name)
     formData.append('phone', editModal.restaurant.phone || '')
     formData.append('address', editModal.restaurant.address || '')
-    formData.append('isActive', editModal.restaurant.isActive)
     formData.append('imagesToDelete', JSON.stringify(editModal.imagesToDelete))
 
     // 添加新上傳的圖片
@@ -592,7 +591,7 @@ watch(
               </span>
             </label>
           </div>
-          <p class="text-sm text-amber-600 mt-2">啟用後，將於每日 11:30 自動推播隨機餐廳。</p>
+          <p class="text-sm text-amber-600 mt-2">啟用後，將於每日 11:25 自動推播隨機餐廳。</p>
         </div>
 
         <div class="bg-white p-6 rounded-2xl shadow-lg border border-amber-200/50 duration-300 hover:shadow-xl hover:-translate-y-1">
@@ -762,14 +761,6 @@ watch(
               <div>
                 <label class="block text-sm font-medium text-amber-800 mb-1">電話</label>
                 <input v-model="editModal.restaurant.phone" type="text" class="w-full border p-3 rounded-lg text-amber-900 border-amber-300 focus:ring-2 focus:ring-amber-500" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-amber-800 mb-1">啟用狀態</label>
-                <label class="inline-flex items-center cursor-pointer">
-                  <input type="checkbox" v-model="editModal.restaurant.isActive" class="sr-only peer" />
-                  <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
-                  <span class="ms-3 font-medium text-amber-700">{{ editModal.restaurant.isActive ? '已啟用' : '未啟用' }}</span>
-                </label>
               </div>
               <div>
                 <h4 class="text-sm font-medium text-amber-800 mb-2">菜單圖片管理</h4>
