@@ -3,6 +3,7 @@ import express from 'express';
 import GroupSetting from '../models/GroupSetting.js';
 import axios from 'axios';
 import { drawRestaurant, createRestaurantFlexMessage } from '../utils/restaurantUtils.js';
+import DrawHistory from '../models/DrawHistory.js';
 import sendErrorEmail from '../utils/sendEmail.js';
 
 import 'dotenv/config';
@@ -140,6 +141,28 @@ async function handleTextMessage(event, groupId, client) {
       // 使用 Flex Message 顯示抽獎結果
       const flexMessage = await createRestaurantFlexMessage(restaurant);
       await client.replyMessage(event.replyToken, flexMessage);
+
+      // 成功推播後，儲存或更新當日的抽籤歷史
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      await DrawHistory.findOneAndUpdate(
+        {
+          groupId: groupId,
+          drawnAt: { $gte: startOfDay, $lte: endOfDay },
+        },
+        {
+          restaurantId: restaurant._id,
+          groupId: groupId,
+          drawnAt: new Date(),
+        },
+        {
+          upsert: true, // 如果找不到符合條件的紀錄，就新增一筆
+          new: true, // 回傳更新後的文檔
+        }
+      );
     } catch (err) {
       console.error('抽獎失敗：', err);
       // Send email notification on error
