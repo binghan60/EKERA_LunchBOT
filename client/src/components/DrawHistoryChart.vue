@@ -4,13 +4,11 @@
       <div class="p-5 border border-amber-200/50 rounded-2xl bg-white shadow-lg">
         <h2 class="text-xl font-bold mb-4 text-amber-800">抽獎歷史分布</h2>
         <div class="mb-4 flex flex-col space-y-2 md:flex-row md:space-x-2 md:space-y-0">
-          <button @click="fetchChartData('week')" :class="{ '!bg-blue-600 !text-white !border-blue-600 hover:!bg-blue-700': timeRange === 'week' }" class="px-4 py-2 border border-gray-300 bg-gray-50 cursor-pointer rounded-md transition-all duration-200 text-sm text-gray-700 hover:bg-gray-100">最近一周</button>
-          <button @click="fetchChartData('month')" :class="{ '!bg-blue-600 !text-white !border-blue-600 hover:!bg-blue-700': timeRange === 'month' }" class="px-4 py-2 border border-gray-300 bg-gray-50 cursor-pointer rounded-md transition-all duration-200 text-sm text-gray-700 hover:bg-gray-100">最近一個月</button>
+          <button @click="fetchChartData('week')" :class="{ '!bg-amber-600 !text-white !border-amber-600 hover:!bg-amber-700': timeRange === 'week' }" class="px-4 py-2 border border-gray-300 bg-gray-50 cursor-pointer rounded-md transition-all duration-200 text-sm text-gray-700 hover:bg-gray-100">最近一周</button>
+          <button @click="fetchChartData('month')" :class="{ '!bg-amber-600 !text-white !border-amber-600 hover:!bg-amber-700': timeRange === 'month' }" class="px-4 py-2 border border-gray-300 bg-gray-50 cursor-pointer rounded-md transition-all duration-200 text-sm text-gray-700 hover:bg-gray-100">最近一個月</button>
         </div>
-        <div v-if="loading" class="text-center py-10 text-gray-500 text-base">載入中...</div>
-        <div v-else-if="errorState" class="text-red-700 bg-red-100 border border-red-300 rounded-md p-4 my-2 text-center text-base">{{ errorState }}</div>
+        <div v-if="errorState" class="text-red-700 bg-red-100 border border-red-300 rounded-md p-4 my-2 text-center text-base">{{ errorState }}</div>
         <div v-else-if="noData" class="text-center py-10 text-gray-500 text-base">此區間內沒有抽獎紀錄</div>
-        <!-- 修正：使用正確的組件名稱 -->
         <Chart v-if="chartOptions" :options="chartOptions"></Chart>
       </div>
     </div>
@@ -51,12 +49,10 @@ const props = defineProps({
   },
 })
 
-// Use a separate ref for chart options and update it completely
-// to ensure reactivity triggers a re-render.
 const chartOptions = ref(null)
 
 const loading = ref(false)
-const timeRange = ref('week') // 'week' or 'month'
+const timeRange = ref('week')
 const errorState = ref(null)
 const noData = ref(false)
 
@@ -74,7 +70,6 @@ const fetchChartData = async (range) => {
   if (range === 'week') {
     startDate.setDate(endDate.getDate() - 7)
   } else {
-    // month
     startDate.setDate(endDate.getDate() - 30)
   }
 
@@ -94,7 +89,7 @@ const fetchChartData = async (range) => {
 
     if (statistics.length === 0) {
       noData.value = true
-      chartOptions.value = null // Clear previous chart
+      chartOptions.value = null
       return
     }
 
@@ -103,11 +98,10 @@ const fetchChartData = async (range) => {
       y: item.count,
     }))
 
-    // Re-create the options object to trigger Highcharts update
     chartOptions.value = {
       chart: {
         type: 'pie',
-        height: 400, // 添加固定高度
+        height: 400,
       },
       title: {
         text: `抽獎次數分布 (${range === 'week' ? '最近一周' : '最近一個月'})`,
@@ -149,12 +143,10 @@ const fetchChartData = async (range) => {
       credits: {
         enabled: false,
       },
-      // 明確設定語言環境
       lang: {
         thousandsSep: ',',
         decimalPoint: '.',
       },
-      // 添加響應式配置
       responsive: {
         rules: [
           {
